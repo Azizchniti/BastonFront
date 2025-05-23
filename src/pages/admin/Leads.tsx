@@ -1,0 +1,477 @@
+
+import React, { useEffect, useState } from "react";
+import { useData } from "@/contexts/DataContext";
+import { Lead, LeadStatus, Member } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Search, Plus, FileEdit } from "lucide-react";
+import { MemberService } from "@/services/members.service";
+
+const LEAD_STATUS_MAP: Record<LeadStatus, string> = {
+  "new": "Novo Lead",
+  "contacted": "Primeiro Contato",
+  "in-progress": "Em andamento",
+  "negotiating": "Negociando",
+  "closed": "Ganho",
+  "lost": "Perdido"
+};
+
+const leadFormSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  phone: z.string().min(10, "Telefone deve ter no mínimo 10 dígitos"),
+  source: z.string().min(1, "Origem é obrigatória"),
+  memberId: z.string().min(1, "Selecione um membro"),
+});
+
+const notesFormSchema = z.object({
+  notes: z.string().min(1, "Observações não podem estar vazias"),
+});
+
+const statusFormSchema = z.object({
+  status: z.enum(["new", "contacted", "in-progress", "negotiating", "closed", "lost"]),
+});
+
+type LeadFormValues = z.infer<typeof leadFormSchema>;
+type NotesFormValues = z.infer<typeof notesFormSchema>;
+type StatusFormValues = z.infer<typeof statusFormSchema>;
+
+const AdminLeads: React.FC = () => {
+  const { leads, addLead, 
+   // addNotes, 
+    changeStatus } = useData();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+const [members, setMembers] = useState<Member[]>([]);
+const [loading, setLoading] = useState<boolean>(true);
+  const leadForm = useForm<LeadFormValues>({
+    resolver: zodResolver(leadFormSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      source: "",
+      memberId: "",
+    },
+  });
+  useEffect(() => {
+  const loadMembers = async () => {
+    try {
+      const data = await MemberService.getAllMembers();
+      setMembers(data);
+    } catch (error) {
+      toast.error("Erro ao buscar membros");
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadMembers();
+}, []);
+
+  const notesForm = useForm<NotesFormValues>({
+    resolver: zodResolver(notesFormSchema),
+    defaultValues: {
+      notes: "",
+    },
+  });
+
+  const statusForm = useForm<StatusFormValues>({
+    resolver: zodResolver(statusFormSchema),
+    defaultValues: {
+      status: "new",
+    },
+  });
+
+  const handleSubmitLead = (values: LeadFormValues) => {
+    const member = members.find(m => m.id === values.memberId);
+    if (!member) {
+      toast.error("Membro não encontrado");
+      return;
+    }
+
+    const success = addLead({
+      name: values.name,
+      phone: values.phone,
+      source: values.source,
+      member_id: values.memberId,
+      status: "new",
+      sale_value: 0,
+      created_at: "",
+      updated_at: ""
+    });
+
+    if (success) {
+      setIsAddDialogOpen(false);
+      leadForm.reset();
+    }
+  };
+
+  //const handleAddNotes = (values: NotesFormValues) => {
+   // if (!selectedLead) return;
+
+  //   const success = addNotes(selectedLead.id, values.notes);
+  //   if (success) {
+  //     setIsNotesDialogOpen(false);
+  //     notesForm.reset();
+  //     setSelectedLead(null);
+  //   }
+  // };
+
+  const handleChangeStatus = (values: StatusFormValues) => {
+    if (!selectedLead) return;
+
+    const success = changeStatus(selectedLead.id, values.status);
+    if (success) {
+      setIsStatusDialogOpen(false);
+      statusForm.reset();
+      setSelectedLead(null);
+    }
+  };
+
+  const openNotesDialog = (lead: Lead) => {
+    setSelectedLead(lead);
+    notesForm.setValue("notes", lead.notes || "");
+    setIsNotesDialogOpen(true);
+  };
+
+  const openStatusDialog = (lead: Lead) => {
+    setSelectedLead(lead);
+    statusForm.setValue("status", lead.status);
+    setIsStatusDialogOpen(true);
+  };
+
+const filteredLeads = leads.filter((lead) => {
+  const member = members.find((m) => m.id === lead.member_id);
+  const memberFullName = member ? `${member.first_name} ${member.last_name}`.toLowerCase() : "";
+  const search = searchTerm.toLowerCase();
+
+  return (
+    lead.name.toLowerCase().includes(search) ||
+    lead.phone.toLowerCase().includes(search) ||
+    memberFullName.includes(search)
+  );
+});
+
+
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Leads</h1>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Novo Lead
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Gerenciamento de Leads</CardTitle>
+          <CardDescription>
+            Visualize e gerencie todos os leads cadastrados no sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, telefone ou membro..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Membro Responsável</TableHead>
+                  <TableHead>Data de Cadastro</TableHead>
+                  <TableHead>Sale value</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLeads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Nenhum lead encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredLeads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.name}</TableCell>
+                      <TableCell>{lead.phone}</TableCell>
+                      <TableCell>{lead.source}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {LEAD_STATUS_MAP[lead.status]}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const member = members.find((m) => m.id === lead.member_id);
+                          return member ? `${member.first_name} ${member.last_name}` : "N/A";
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        {lead.created_at}
+                      </TableCell>
+                       <TableCell>
+                        {lead.sale_value}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openNotesDialog(lead)}
+                          >
+                            Observações
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openStatusDialog(lead)}
+                          >
+                            Status
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Add Lead Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Lead</DialogTitle>
+            <DialogDescription>
+              Preencha as informações para cadastrar um novo lead no sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...leadForm}>
+            <form onSubmit={leadForm.handleSubmit(handleSubmitLead)} className="space-y-4">
+              <FormField
+                control={leadForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome completo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={leadForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(00) 00000-0000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={leadForm.control}
+                name="source"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Origem</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Instagram, Facebook, Indicação, etc" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={leadForm.control}
+                name="memberId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Membro Responsável</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um membro" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {members.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                             {member.first_name} {member.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Notes Dialog */}
+      <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Observações</DialogTitle>
+            <DialogDescription>
+              Adicione observações para o lead {selectedLead?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          {/* <Form {...notesForm}>
+            <form onSubmit={notesForm.handleSubmit(handleAddNotes)} className="space-y-4">
+              <FormField
+                control={notesForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Digite as observações sobre este lead..."
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </form>
+          </Form> */}
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Status Dialog */}
+      <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Alterar Status</DialogTitle>
+            <DialogDescription>
+              Altere o status do lead {selectedLead?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...statusForm}>
+            <form onSubmit={statusForm.handleSubmit(handleChangeStatus)} className="space-y-4">
+              <FormField
+                control={statusForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(LEAD_STATUS_MAP).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+    );
+  };
+
+
+export default AdminLeads;

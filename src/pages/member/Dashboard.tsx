@@ -1,0 +1,513 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useData } from "@/contexts/DataContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Phone, CheckSquare, XSquare, DollarSign, Users, Trophy, TrendingUp, BarChart3 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { Member, MemberGrade } from "@/types";
+
+// Define grade colors mapping
+const gradeColors = {
+  start: "bg-slate-500",
+  standard: "bg-blue-500",
+  gold: "bg-yellow-500",
+  platinum: "bg-violet-500",
+  diamond: "bg-emerald-500"
+};
+
+const MemberDashboard: React.FC = () => {
+  const { user } = useAuth();
+  const { 
+    leads, 
+    getMemberCommissions, 
+    getMemberSquad, 
+    getMemberMonthlyCommissions,
+    getSquadMetrics 
+  } = useData();
+  
+  const [activeTab, setActiveTab] = useState("personal");
+  
+  // O usuário atual está garantido como sendo um Member pelo layout autenticado
+  const currentMember = user as Member;
+  
+  // Dados do membro
+  const memberLeads = leads.filter(lead => lead.memberId === currentMember.id);
+  const memberCommissions = getMemberCommissions(currentMember.id);
+  const squad = getMemberSquad(currentMember.id);
+  const monthlyCommissions = getMemberMonthlyCommissions(currentMember.id);
+  const squadMetrics = getSquadMetrics(currentMember.id);
+  
+  // Contagem de leads por status
+  const leadCounts = memberLeads.reduce(
+    (acc, lead) => {
+      acc[lead.status]++;
+      return acc;
+    },
+    { new: 0, contacted: 0, closed: 0, lost: 0 } as Record<string, number>
+  );
+  
+  // Total de vendas fechadas
+  const closedLeads = memberLeads.filter(lead => lead.status === "closed");
+  const totalSalesValue = closedLeads.reduce((sum, lead) => sum + (lead.saleValue || 0), 0);
+  
+  // Dados para o gráfico de status de leads
+  const statusData = [
+    { name: "Novos", value: leadCounts.new, color: "#94a3b8" },
+    { name: "Contatados", value: leadCounts.contacted, color: "#3b82f6" },
+    { name: "Fechados", value: leadCounts.closed, color: "#22c55e" },
+    { name: "Perdidos", value: leadCounts.lost, color: "#ef4444" },
+  ];
+  
+  // Dados para o gráfico de comissões mensais
+  const commissionData = monthlyCommissions.slice(0, 6).map(mc => ({
+    name: `${mc.month.substring(0, 3)}/${mc.year.toString().substring(2)}`,
+    valor: mc.totalCommission,
+  })).reverse();
+  
+  // Métricas pessoais para os cards
+  const personalMetrics = [
+    {
+      title: "Meus Leads",
+      value: memberLeads.length,
+      description: "Leads cadastrados por você",
+      icon: Phone,
+      color: "text-indigo-500",
+      link: "/member/leads",
+    },
+    {
+      title: "Vendas Fechadas",
+      value: leadCounts.closed,
+      description: leadCounts.closed > 0 
+        ? `${((leadCounts.closed / memberLeads.length) * 100).toFixed(1)}% de conversão` 
+        : "Nenhuma venda ainda",
+      icon: CheckSquare,
+      color: "text-green-500",
+      link: "/member/leads",
+    },
+    {
+      title: "Volume de Vendas",
+      value: `R$ ${(totalSalesValue / 1000).toFixed(1)}K`,
+      description: "Valor total de vendas realizadas",
+      icon: DollarSign,
+      color: "text-emerald-500",
+      link: "/member/leads",
+    },
+    {
+      title: "Total em Comissões",
+      value: `R$ ${currentMember.totalCommission.toFixed(2)}`,
+      description: "Valor acumulado em comissões",
+      icon: TrendingUp,
+      color: "text-amber-500",
+      link: "/member/commissions",
+    },
+  ];
+
+  // Métricas do squad para os cards
+  const squadMetricsCards = [
+    {
+      title: "Membros no Squad",
+      value: squad.length,
+      description: "Membros sob sua liderança",
+      icon: Users,
+      color: "text-blue-500",
+      link: "/member/squad",
+    },
+    {
+      title: "Vendas do Squad",
+      value: `R$ ${(squadMetrics.totalSales / 1000).toFixed(1)}K`,
+      description: "Volume total de vendas do squad",
+      icon: BarChart3,
+      color: "text-purple-500",
+      link: "/member/squad",
+    },
+    {
+      title: "Contatos do Squad",
+      value: squadMetrics.totalContacts,
+      description: "Total de leads cadastrados pelo squad",
+      icon: Phone,
+      color: "text-orange-500",
+      link: "/member/squad",
+    },
+    {
+      title: "Comissões do Squad",
+      value: `R$ ${squadMetrics.totalValue.toFixed(2)}`,
+      description: "Total acumulado pelo squad",
+      icon: DollarSign,
+      color: "text-teal-500",
+      link: "/member/squad",
+    },
+  ];
+
+  // Formatação do valor para o tooltip do gráfico de comissões
+  const formatCurrency = (value: number) => {
+    return `R$ ${value.toFixed(2)}`;
+  };
+
+  // Progresso para o próximo nível
+  const levelProgress = getNextLevelProgress(currentMember.grade, currentMember.totalSales);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Bem-vindo, {currentMember.name}
+        </p>
+      </div>
+
+      {/* Status de graduação */}
+      <Card className="neo border-none">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                <h3 className="font-medium">Seu nível atual: <span className="font-semibold text-primary">{currentMember.grade.charAt(0).toUpperCase() + currentMember.grade.slice(1)}</span></h3>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Progresso para o próximo nível</span>
+                  <span className="font-medium">
+                    {currentMember.grade === "diamond" 
+                      ? "Nível máximo" 
+                      : levelProgress.text}
+                  </span>
+                </div>
+                <Progress 
+                  value={levelProgress.percentage} 
+                  className="h-2.5" 
+                />
+                <div className="grid grid-cols-5 text-xs text-muted-foreground">
+                  <div className="text-center">Start</div>
+                  <div className="text-center">Standard</div>
+                  <div className="text-center">Gold</div>
+                  <div className="text-center">Platinum</div>
+                  <div className="text-center">Diamond</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Link to="/member/leads/new">
+                <Button>
+                  <Phone className="mr-2 h-4 w-4" />
+                  Novo Lead
+                </Button>
+              </Link>
+              <Link to="/member/squad">
+                <Button variant="outline">
+                  <Users className="mr-2 h-4 w-4" />
+                  Meu Squad
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabs para alternar entre dados pessoais e dados do squad */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="personal">Meus Resultados</TabsTrigger>
+          <TabsTrigger value="squad">Meu Squad</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="personal" className="space-y-6">
+          {/* Grid de métricas pessoais */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {personalMetrics.map((metric, index) => (
+              <Card key={index} className="neo border-none hover:shadow-lg transition-all">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {metric.title}
+                  </CardTitle>
+                  <metric.icon className={`h-4 w-4 ${metric.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {metric.description}
+                  </p>
+                  <Link to={metric.link}>
+                    <Button variant="ghost" className="p-0 h-auto mt-2 text-xs font-medium hover:underline">
+                      Ver detalhes
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Gráficos e tabelas */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Status dos Leads */}
+            <Card className="neo border-none">
+              <CardHeader>
+                <CardTitle>Status dos seus Leads</CardTitle>
+                <CardDescription>
+                  Distribuição de leads por status
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
+                    >
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value, "Leads"]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Histórico de Comissões */}
+            <Card className="neo border-none">
+              <CardHeader>
+                <CardTitle>Histórico de Comissões</CardTitle>
+                <CardDescription>
+                  Comissões recebidas nos últimos meses
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={commissionData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [formatCurrency(value as number), "Comissão"]} />
+                    <Legend />
+                    <Bar dataKey="valor" name="Comissão (R$)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Comissões recentes */}
+          <Card className="neo border-none">
+            <CardHeader>
+              <CardTitle>Comissões Recentes</CardTitle>
+              <CardDescription>
+                Últimas comissões geradas para você
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {memberCommissions.length > 0 ? (
+                <div className="space-y-4">
+                  {memberCommissions.slice(0, 5).map((commission) => (
+                    <div key={commission.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/50">
+                      <div>
+                        <div className="font-medium">{commission.leadName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Venda de R$ {commission.saleValue.toFixed(2)} • {commission.commissionPercentage}%
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-green-600">
+                          +R$ {commission.commissionValue.toFixed(2)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(commission.saleDate).toLocaleDateString("pt-BR")}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">
+                    Você ainda não tem comissões geradas.
+                  </p>
+                  <p className="text-sm mt-2">
+                    Cadastre leads e converta vendas para ganhar comissões.
+                  </p>
+                </div>
+              )}
+
+              {memberCommissions.length > 0 && (
+                <div className="mt-4">
+                  <Link to="/member/commissions">
+                    <Button variant="outline" className="w-full">
+                      Ver todas as comissões
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="squad" className="space-y-6">
+          {/* Grid de métricas do squad */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {squadMetricsCards.map((metric, index) => (
+              <Card key={index} className="neo border-none hover:shadow-lg transition-all">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {metric.title}
+                  </CardTitle>
+                  <metric.icon className={`h-4 w-4 ${metric.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {metric.description}
+                  </p>
+                  <Link to={metric.link}>
+                    <Button variant="ghost" className="p-0 h-auto mt-2 text-xs font-medium hover:underline">
+                      Ver detalhes
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Lista de membros do squad */}
+          <Card className="neo border-none">
+            <CardHeader>
+              <CardTitle>Membros do seu Squad</CardTitle>
+              <CardDescription>
+                {squad.length > 0 
+                  ? `Você lidera ${squad.length} ${squad.length === 1 ? 'membro' : 'membros'}`
+                  : "Você ainda não tem membros no seu squad"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {squad.length > 0 ? (
+                <div className="space-y-4">
+                  {squad.slice(0, 5).map((member) => (
+                    <div key={member.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{member.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {member.phone} • {member.email}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-1.5">
+                          <Badge className={`${gradeColors[member.grade as MemberGrade]}`}>
+                            {member.grade.charAt(0).toUpperCase() + member.grade.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          R$ {member.totalSales.toFixed(2)} em vendas
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">
+                    Você ainda não tem membros no seu squad.
+                  </p>
+                  <p className="text-sm mt-2">
+                    Convide pessoas para se juntarem ao seu squad para aumentar seus resultados.
+                  </p>
+                </div>
+              )}
+
+              {squad.length > 0 && (
+                <div className="mt-4">
+                  <Link to="/member/squad">
+                    <Button variant="outline" className="w-full">
+                      Ver squad completo
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de vendas por membro (top 5) */}
+          <Card className="neo border-none">
+            <CardHeader>
+              <CardTitle>Desempenho do Squad</CardTitle>
+              <CardDescription>
+                Vendas dos top membros do seu squad
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              {squad.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={squad.slice(0, 5).sort((a, b) => b.totalSales - a.totalSales).map(member => ({
+                      name: member.name.split(' ')[0],
+                      vendas: member.totalSales
+                    }))}
+                    layout="vertical"
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={100} />
+                    <Tooltip formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, "Vendas"]} />
+                    <Legend />
+                    <Bar dataKey="vendas" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">
+                    Sem dados para exibir
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+// Função auxiliar para calcular o progresso para o próximo nível
+function getNextLevelProgress(currentGrade: string, totalSales: number): { percentage: number; text: string } {
+  const levels = {
+    start: { min: 0, max: 100000, next: "Standard" },
+    standard: { min: 100000, max: 500000, next: "Gold" },
+    gold: { min: 500000, max: 1000000, next: "Platinum" },
+    platinum: { min: 1000000, max: 10000000, next: "Diamond" },
+    diamond: { min: 10000000, max: Infinity, next: null },
+  };
+
+  const grade = currentGrade as keyof typeof levels;
+  const level = levels[grade];
+  
+  if (grade === "diamond") {
+    return { percentage: 100, text: "Nível máximo atingido" };
+  }
+  
+  const currentRange = level.max - level.min;
+  const currentProgress = totalSales - level.min;
+  const percentage = Math.min(100, Math.round((currentProgress / currentRange) * 100));
+  const remaining = level.max - totalSales;
+  
+  return {
+    percentage,
+    text: `R$ ${(remaining / 1000).toFixed(1)}K para ${level.next}`,
+  };
+}
+
+export default MemberDashboard;

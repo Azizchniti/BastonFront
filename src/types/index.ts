@@ -1,0 +1,98 @@
+
+export type UserRole = 'admin' | 'member';
+
+export type MemberGrade = 'start' | 'standard' | 'gold' | 'platinum' | 'diamond';
+
+export type LeadStatus = 'new' | 'contacted' | 'in-progress' | 'negotiating' | 'closed' | 'lost';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+}
+
+export interface Member {
+  id: string;
+  cpf: string;
+  phone: string;
+  grade: string;
+  total_sales: number;
+  total_contacts: number;
+  total_commission: number;
+  first_name: string;
+  last_name: string;
+  upline_id: string | null; // Assuming upline_id can be nullable
+  // Add any other fields that might exist in your table if necessary
+}
+
+
+// export interface Lead {
+//   id: string;
+//   name: string;
+//   phone: string;
+//   source: string;
+//   status: LeadStatus;
+//   memberId: string; // ID do membro que cadastrou o lead
+//   memberName?: string; // Nome do membro que cadastrou o lead
+//   createdAt: Date;
+//   updatedAt: Date;
+//   saleValue?: number; // Valor da venda se o lead foi convertido
+//   notes?: string; // Observações sobre o lead
+// }
+export interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  source: string;
+  status: LeadStatus
+  member_id: string;
+  sale_value: number;
+  created_at: string;
+  updated_at: string;
+  notes?: string;
+}
+
+export interface Squad {
+  memberId: string;
+  memberName: string;
+  totalMembers: number;
+  totalContacts: number;
+  totalSales: number;
+  totalValue: number;
+}
+
+export interface Commission {
+  id: string;
+  memberId: string;
+  memberName: string;
+  leadId: string;
+  leadName: string;
+  saleValue: number;
+  commissionPercentage: number;
+  commissionValue: number;
+  saleDate: Date;
+  paymentDate: Date | null;
+  isPaid: boolean;
+}
+
+export interface MonthlyCommission {
+  month: string;
+  year: number;
+  totalCommission: number;
+  isPaid: boolean;
+  details: Commission[];
+}
+
+export interface CommissionGroup {
+  id: string;
+  memberId: string;
+  memberName: string;
+  month: number;
+  year: number;
+  commissions: Commission[];
+  totalValue: number;
+  isPaid: boolean;
+  dueDate: Date;
+}
