@@ -39,7 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed, 
   toggleCollapse 
 }) => {
+  
   const { user } = useAuth();
+  
+  console.log("Final user object for API calls:", user);
+
   const location = useLocation();
   
   const isAdmin = user?.role === "admin";
@@ -103,21 +107,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/member/leads",
       icon: Phone,
     },
-    {
-      title: "Adicionar Lead",
-      href: "/member/leads/new",
-      icon: PlusCircle,
-    },
+    // {
+    //   title: "Adicionar Lead",
+    //   href: "/member/leads/new",
+    //   icon: PlusCircle,
+    // },
     {
       title: "Meu Squad",
       href: "/member/squad",
       icon: Users,
     },
-    {
-      title: "Adicionar Membro",
-      href: "/member/member/new",
-      icon: PlusCircle,
-    },
+    // {
+    //   title: "Adicionar Membro",
+    //   href: "/member/member/new",
+    //   icon: PlusCircle,
+    // },
     {
       title: "Comissões",
       href: "/member/commissions",

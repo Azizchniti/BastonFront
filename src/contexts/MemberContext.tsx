@@ -3,8 +3,8 @@ import React, { createContext, useContext, useState } from "react";
 import { Member } from "@/types";
 import { toast } from "sonner";
 import { MOCK_MEMBERS } from "@/data/mockData";
-import MemberService from "@/services/memberService_static";
 import { findMemberPath } from "@/utils/dataUtils";
+import { MemberService } from "@/services/members.service";
 
 // Member context type definition
 type MemberContextType = {
@@ -26,14 +26,9 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({
   const [members, setMembers] = useState<Member[]>(MOCK_MEMBERS);
   
   // Instantiate the service
-  const memberService = new MemberService(members, []);
+  const memberService = MemberService;
 
   // Member management functions
-  const addMember = (memberData: Omit<Member, "id" | "createdAt" | "grade" | "totalSales" | "totalContacts" | "totalCommission">) => {
-    if (memberService.addMember(memberData)) {
-      setMembers([...memberService["members"]]);
-    }
-  };
 
   const updateMember = (id: string, data: Partial<Member>) => {
     if (memberService.updateMember(id, data)) {
@@ -64,7 +59,6 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({
     <MemberContext.Provider
       value={{
         members,
-        addMember,
         updateMember,
         deleteMember,
         getMemberSquad,

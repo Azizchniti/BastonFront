@@ -9,4 +9,5 @@ export interface Lead {
   sale_value: number;
   created_at: string;
   updated_at: string;
+  observations?: string;
 }

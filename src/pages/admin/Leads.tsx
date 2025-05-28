@@ -50,6 +50,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Search, Plus, FileEdit } from "lucide-react";
 import { MemberService } from "@/services/members.service";
+import DeleteLeadDialog from "@/components/DeleteLeadDialog";
 
 const LEAD_STATUS_MAP: Record<LeadStatus, string> = {
   "new": "Novo Lead",
@@ -65,6 +66,7 @@ const leadFormSchema = z.object({
   phone: z.string().min(10, "Telefone deve ter no mínimo 10 dígitos"),
   source: z.string().min(1, "Origem é obrigatória"),
   memberId: z.string().min(1, "Selecione um membro"),
+  sale_value: z.number().min(1, "Selecione um preço"),
 });
 
 const notesFormSchema = z.object({
@@ -81,6 +83,7 @@ type StatusFormValues = z.infer<typeof statusFormSchema>;
 
 const AdminLeads: React.FC = () => {
   const { leads, addLead, 
+    deleteLead,
    // addNotes, 
     changeStatus } = useData();
   const [searchTerm, setSearchTerm] = useState("");
@@ -140,9 +143,7 @@ const [loading, setLoading] = useState<boolean>(true);
       source: values.source,
       member_id: values.memberId,
       status: "new",
-      sale_value: 0,
-      created_at: "",
-      updated_at: ""
+      sale_value: values.sale_value,
     });
 
     if (success) {
@@ -161,6 +162,10 @@ const [loading, setLoading] = useState<boolean>(true);
   //     setSelectedLead(null);
   //   }
   // };
+const handleDelete = async (id: string) => {
+  await deleteLead(id);
+};
+
 
   const handleChangeStatus = (values: StatusFormValues) => {
     if (!selectedLead) return;
@@ -235,7 +240,7 @@ const filteredLeads = leads.filter((lead) => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Origem</TableHead>
-                  <TableHead>Status</TableHead>
+                  {/* <TableHead>Status</TableHead> */}
                   <TableHead>Membro Responsável</TableHead>
                   <TableHead>Data de Cadastro</TableHead>
                   <TableHead>Sale value</TableHead>
@@ -255,11 +260,11 @@ const filteredLeads = leads.filter((lead) => {
                       <TableCell className="font-medium">{lead.name}</TableCell>
                       <TableCell>{lead.phone}</TableCell>
                       <TableCell>{lead.source}</TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {LEAD_STATUS_MAP[lead.status]}
                         </span>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         {(() => {
                           const member = members.find((m) => m.id === lead.member_id);
@@ -267,11 +272,14 @@ const filteredLeads = leads.filter((lead) => {
                         })()}
                       </TableCell>
                       <TableCell>
-                        {lead.created_at}
+                        {new Date(lead.created_at).toLocaleDateString('pt-BR')}
                       </TableCell>
+
                        <TableCell>
-                        {lead.sale_value}
-                      </TableCell>
+                          {new Intl.NumberFormat('pt-BR', 
+                            { style: 'currency', currency: 'BRL' }).format(lead.sale_value)}
+                        </TableCell>
+
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button
@@ -288,6 +296,14 @@ const filteredLeads = leads.filter((lead) => {
                           >
                             Status
                           </Button>
+                        <DeleteLeadDialog
+                            onConfirm={() => handleDelete(lead.id)}
+                            trigger={
+                              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                                Deletar
+                              </button>
+                            }
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -351,6 +367,25 @@ const filteredLeads = leads.filter((lead) => {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={leadForm.control}
+                name="sale_value"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor da Venda</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 1500"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
 
               <FormField
                 control={leadForm.control}

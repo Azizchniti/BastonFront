@@ -21,8 +21,13 @@ export const LeadService = {
 
   // ✅ Create new lead
   async createLead(leadData: Partial<Lead>): Promise<Lead> {
+    try {
     const response = await axios.post(`${API_URL}`, leadData);
     return response.data;
+    } catch (err) {
+  console.error("Failed to create lead:", err.response?.data || err);
+  throw err;
+}
   },
 
   // ✅ Update lead by ID

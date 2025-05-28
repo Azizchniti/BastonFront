@@ -13,8 +13,9 @@ import { useMemberContext } from "./MemberContext";
 
 type LeadContextType = {
   leads: Lead[];
-  addLead: (lead: Omit<Lead, "id" | "createdAt" | "updatedAt">) => Promise<boolean>;
+  addLead: (lead: Omit<Lead, "id" | "created_at" | "updated_at">) => Promise<boolean>;
   updateLead: (id: string, data: Partial<Lead>) => Promise<void>;
+  deleteLead: (id: string) => Promise<void>; 
   closeLead: (id: string, saleValue: number) => Promise<void>;
   getMemberLeads: (memberId: string) => Lead[];
   getActiveLeads: () => Lead[];
@@ -23,7 +24,7 @@ type LeadContextType = {
   getMemberActiveLeads: (memberId: string) => Lead[];
   getMemberClosedLeads: (memberId: string) => Lead[];
   getMemberLostLeads: (memberId: string) => Lead[];
- // addNotes: (id: string, notes: string) => Promise<boolean>;
+  addNotes: (id: string, notes: string) => Promise<boolean>;
   changeStatus: (id: string, status: LeadStatus) => Promise<boolean>;
   findLead: (id: string) => Lead | undefined;
   getLeadCountByStatus: () => Record<LeadStatus, number>;
@@ -54,7 +55,7 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addLead = async (
-    leadData: Omit<Lead, "id" | "createdAt" | "updatedAt">
+    leadData: Omit<Lead, "id" | "created_at" | "updated_at">
   ): Promise<boolean> => {
     try {
       await LeadService.createLead(leadData);
@@ -88,6 +89,16 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error("Erro ao fechar o lead");
     }
   };
+  const deleteLead = async (id: string): Promise<void> => {
+  try {
+    await LeadService.deleteLead(id);
+    await refreshLeads();
+    toast.success("Lead deletado com sucesso");
+  } catch (err) {
+    toast.error("Erro ao deletar o lead");
+  }
+};
+
 
   const getMemberLeads = (memberId: string) => {
     return leads.filter((lead) => lead.member_id === memberId);
@@ -106,19 +117,22 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getMemberLostLeads = (memberId: string) =>
     leads.filter((lead) => lead.member_id === memberId && lead.status === "lost");
 
-  // const addNotes = async (id: string, notes: string): Promise<boolean> => {
-  //   try {
-  //     const lead = leads.find((lead) => lead.id === id);
-  //     if (!lead) throw new Error("Lead não encontrado");
-  //     const updatedNotes = [...(lead.notes || []), notes];
-  //     await LeadService.updateLead(id, { notes: updatedNotes });
-  //     await refreshLeads();
-  //     return true;
-  //   } catch (err) {
-  //     toast.error("Erro ao adicionar nota");
-  //     return false;
-  //   }
-  // };
+    const addNotes = async (id: string, newNote: string): Promise<boolean> => {
+      try {
+        const lead = leads.find((lead) => lead.id === id);
+        if (!lead) throw new Error("Lead não encontrado");
+
+        const updatedNotes = lead.notes ? `${lead.notes}\n${newNote}` : newNote;
+
+        await LeadService.updateLead(id, { notes: updatedNotes });
+        await refreshLeads();
+        return true;
+      } catch (err) {
+        toast.error("Erro ao adicionar nota");
+        return false;
+      }
+    };
+
 
   const changeStatus = async (id: string, status: LeadStatus): Promise<boolean> => {
     try {
@@ -155,6 +169,7 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
         leads,
         addLead,
         updateLead,
+        deleteLead,
         closeLead,
         getMemberLeads,
         getActiveLeads,
@@ -163,7 +178,7 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getMemberActiveLeads,
         getMemberClosedLeads,
         getMemberLostLeads,
-       // addNotes,
+        addNotes,
         changeStatus,
         findLead,
         getLeadCountByStatus,

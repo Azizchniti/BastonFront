@@ -55,6 +55,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 const LEAD_STATUS_MAP: Record<LeadStatus, string> = {
   "new": "Novo Lead",
@@ -69,9 +70,16 @@ const leadFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   phone: z.string().min(10, "Telefone deve ter no mínimo 10 dígitos"),
   source: z.string().min(1, "Origem é obrigatória"),
+  sale_value: z.number().min(1, "Selecione um preço"),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
+
+const notesFormSchema = z.object({
+  notes: z.string().min(1, "Observações não podem estar vazias"),
+});
+
+type NotesFormValues = z.infer<typeof notesFormSchema>;
 
 const MemberLeads: React.FC = () => {
   const { user } = useAuth();
@@ -79,7 +87,9 @@ const MemberLeads: React.FC = () => {
     getMemberActiveLeads, 
     getMemberClosedLeads, 
     getMemberLostLeads, 
-    addLead 
+    addLead ,
+    addNotes,
+    leads
   } = useData();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -89,91 +99,149 @@ const MemberLeads: React.FC = () => {
   const closedLeads = getMemberClosedLeads(user?.id || "");
   const lostLeads = getMemberLostLeads(user?.id || "");
 
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+
   const leadForm = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
       name: "",
       phone: "",
       source: "",
+       sale_value: 0,
     },
   });
 
-  const handleSubmitLead = (values: LeadFormValues) => {
-    if (!user) return;
+  const handleSubmitLead = async (values: LeadFormValues) => {
+    if (!user) {
+      toast.error("Usuário não autenticado.");
+      return;
+    }
 
-    const success = addLead({
-      name: values.name,
-      phone: values.phone,
-      source: values.source,
-      status: "new",
-      memberId: user.id,
-      memberName: user.name,
-    });
+    try {
+      const success = await addLead({
+        name: values.name,
+        phone: values.phone,
+        source: values.source,
+        status: "new",
+        member_id: user.id, 
+        sale_value: values.sale_value,
+      });
 
-    if (success) {
-      setIsAddDialogOpen(false);
-      leadForm.reset();
+      if (success) {
+        toast.success("Lead criado com sucesso!");
+        setIsAddDialogOpen(false)
+        
+      } else {
+        toast.error("Erro ao criar o lead.");
+        setIsAddDialogOpen(false)
+      }
+    } catch (err) {
+      console.error("Erro ao criar lead:", err);
+      toast.error("Erro inesperado ao criar lead.");
     }
   };
+  const handleAddNotes = (values: NotesFormValues) => {
+    if (!selectedLead) return;
 
-  const filterLeads = (leads: Lead[]) => {
-    return leads.filter(lead => 
+     const success = addNotes(selectedLead.id, values.notes);
+     if (success) {
+       setIsNotesDialogOpen(false);
+       notesForm.reset();
+       setSelectedLead(null);
+     }
+   };
+
+
+const filterLeads = (status: string) => {
+  if (!user?.id) return [];
+
+  return leads.filter(lead =>
+    lead.member_id === user.id &&
+    lead.status === status &&
+    (
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.phone.includes(searchTerm) ||
       lead.source.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
-
-  const filteredActiveLeads = filterLeads(activeLeads);
-  const filteredClosedLeads = filterLeads(closedLeads);
-  const filteredLostLeads = filterLeads(lostLeads);
-
-  const LeadTable = ({ leads }: { leads: Lead[] }) => (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Telefone</TableHead>
-            <TableHead>Origem</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Data de Cadastro</TableHead>
-            {leads === closedLeads && <TableHead>Valor da Venda</TableHead>}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {leads.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={leads === closedLeads ? 6 : 5} className="h-24 text-center">
-                Nenhum lead encontrado.
-              </TableCell>
-            </TableRow>
-          ) : (
-            leads.map((lead) => (
-              <TableRow key={lead.id}>
-                <TableCell className="font-medium">{lead.name}</TableCell>
-                <TableCell>{lead.phone}</TableCell>
-                <TableCell>{lead.source}</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {LEAD_STATUS_MAP[lead.status]}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {lead.createdAt.toLocaleDateString("pt-BR")}
-                </TableCell>
-                {leads === closedLeads && (
-                  <TableCell>
-                    {lead.saleValue ? `R$ ${lead.saleValue.toFixed(2)}` : "N/A"}
-                  </TableCell>
-                )}
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    )
   );
+};
+
+
+  const filteredActiveLeads = filterLeads('new');
+  const filteredClosedLeads = filterLeads('closed');
+  const filteredLostLeads = filterLeads('lost');
+
+  const notesForm = useForm<NotesFormValues>({
+  resolver: zodResolver(notesFormSchema),
+  defaultValues: {
+    notes: "",
+  },
+});
+
+const openNotesDialog = (lead: Lead) => {
+  setSelectedLead(lead);
+  notesForm.setValue("notes", lead.notes || "");
+  setIsNotesDialogOpen(true);
+};
+
+const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: boolean }) => (
+  <div className="rounded-md border">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>Telefone</TableHead>
+          <TableHead>Origem</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Data de Cadastro</TableHead>
+          <TableHead>Valor da Venda</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {leads.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={isClosed ? 6 : 5} className="h-24 text-center">
+              Nenhum lead encontrado.
+            </TableCell>
+          </TableRow>
+        ) : (
+          leads.map((lead) => (
+            <TableRow key={lead.id}>
+              <TableCell className="font-medium">{lead.name}</TableCell>
+              <TableCell>{lead.phone}</TableCell>
+              <TableCell>{lead.source}</TableCell>
+              <TableCell>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {LEAD_STATUS_MAP[lead.status]}
+                </span>
+              </TableCell>
+              <TableCell>
+                {new Date(lead.created_at).toLocaleDateString('pt-BR')}
+              </TableCell>
+           
+                <TableCell>
+                  {lead.sale_value ? `R$ ${lead.sale_value.toFixed(2)}` : "N/A"}
+                </TableCell>
+              
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openNotesDialog(lead)}
+                >
+                  Observações
+                </Button>
+              </TableCell>
+
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  </div>
+);
+
 
   return (
     <div className="space-y-6">
@@ -206,9 +274,9 @@ const MemberLeads: React.FC = () => {
 
           <Tabs defaultValue="active" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="active">Ativos ({activeLeads.length})</TabsTrigger>
-              <TabsTrigger value="closed">Ganhos ({closedLeads.length})</TabsTrigger>
-              <TabsTrigger value="lost">Perdidos ({lostLeads.length})</TabsTrigger>
+              <TabsTrigger value="active">Ativos ({filteredActiveLeads.length})</TabsTrigger>
+              <TabsTrigger value="closed">Ganhos ({filteredClosedLeads.length})</TabsTrigger>
+              <TabsTrigger value="lost">Perdidos ({filteredLostLeads.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="active" className="mt-4">
               <LeadTable leads={filteredActiveLeads} />
@@ -275,6 +343,24 @@ const MemberLeads: React.FC = () => {
                   </FormItem>
                 )}
               />
+                  <FormField
+                    control={leadForm.control}
+                    name="sale_value"
+                     render={({ field }) => (
+                        <FormItem>
+                       <FormLabel>Valor da Venda</FormLabel>
+                         <FormControl>
+                            <Input
+                            type="number"
+                            placeholder="Ex: 1500"
+                            {...field}
+                           onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                       </FormControl>
+                            <FormMessage />
+                       </FormItem>
+                              )}
+                            />
 
               <DialogFooter>
                 <Button type="submit">Salvar</Button>
@@ -283,6 +369,42 @@ const MemberLeads: React.FC = () => {
           </Form>
         </DialogContent>
       </Dialog>
+
+            {/* Add Notes Dialog */}
+            <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Adicionar Observações</DialogTitle>
+                  <DialogDescription>
+                    Adicione observações para o lead {selectedLead?.name}.
+                  </DialogDescription>
+                </DialogHeader>
+                 <Form {...notesForm}>
+                  <form onSubmit={notesForm.handleSubmit(handleAddNotes)} className="space-y-4">
+                    <FormField
+                      control={notesForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Observações</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Digite as observações sobre este lead..."
+                              className="min-h-[120px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit">Salvar</Button>
+                    </DialogFooter>
+                  </form>
+                </Form> 
+              </DialogContent>
+            </Dialog>
     </div>
   );
 };

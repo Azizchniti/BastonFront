@@ -29,14 +29,15 @@ const MemberDashboard: React.FC = () => {
     getMemberMonthlyCommissions,
     getSquadMetrics 
   } = useData();
-  
+  console.log(leads)
+  console.log(user)
   const [activeTab, setActiveTab] = useState("personal");
   
   // O usuário atual está garantido como sendo um Member pelo layout autenticado
   const currentMember = user as Member;
   
   // Dados do membro
-  const memberLeads = leads.filter(lead => lead.memberId === currentMember.id);
+  const memberLeads = leads.filter(lead => lead.member_id === currentMember.id);
   const memberCommissions = getMemberCommissions(currentMember.id);
   const squad = getMemberSquad(currentMember.id);
   const monthlyCommissions = getMemberMonthlyCommissions(currentMember.id);
@@ -53,7 +54,7 @@ const MemberDashboard: React.FC = () => {
   
   // Total de vendas fechadas
   const closedLeads = memberLeads.filter(lead => lead.status === "closed");
-  const totalSalesValue = closedLeads.reduce((sum, lead) => sum + (lead.saleValue || 0), 0);
+  const totalSalesValue = closedLeads.reduce((sum, lead) => sum + (lead.sale_value || 0), 0);
   
   // Dados para o gráfico de status de leads
   const statusData = [
@@ -70,93 +71,105 @@ const MemberDashboard: React.FC = () => {
   })).reverse();
   
   // Métricas pessoais para os cards
-  const personalMetrics = [
-    {
-      title: "Meus Leads",
-      value: memberLeads.length,
-      description: "Leads cadastrados por você",
-      icon: Phone,
-      color: "text-indigo-500",
-      link: "/member/leads",
-    },
-    {
-      title: "Vendas Fechadas",
-      value: leadCounts.closed,
-      description: leadCounts.closed > 0 
-        ? `${((leadCounts.closed / memberLeads.length) * 100).toFixed(1)}% de conversão` 
+const personalMetrics = [
+  {
+    title: "Meus Leads",
+    value: memberLeads?.length ?? 0,
+    description: "Leads cadastrados por você",
+    icon: Phone,
+    color: "text-indigo-500",
+    link: "/member/leads",
+  },
+  {
+    title: "Vendas Fechadas",
+    value: leadCounts?.closed ?? 0,
+    description:
+      leadCounts?.closed > 0 && memberLeads?.length > 0
+        ? `${((leadCounts.closed / memberLeads.length) * 100).toFixed(1)}% de conversão`
         : "Nenhuma venda ainda",
-      icon: CheckSquare,
-      color: "text-green-500",
-      link: "/member/leads",
-    },
-    {
-      title: "Volume de Vendas",
-      value: `R$ ${(totalSalesValue / 1000).toFixed(1)}K`,
-      description: "Valor total de vendas realizadas",
-      icon: DollarSign,
-      color: "text-emerald-500",
-      link: "/member/leads",
-    },
-    {
-      title: "Total em Comissões",
-      value: `R$ ${currentMember.totalCommission.toFixed(2)}`,
-      description: "Valor acumulado em comissões",
-      icon: TrendingUp,
-      color: "text-amber-500",
-      link: "/member/commissions",
-    },
-  ];
+    icon: CheckSquare,
+    color: "text-green-500",
+    link: "/member/leads",
+  },
+  {
+    title: "Volume de Vendas",
+    value:
+      typeof totalSalesValue === "number"
+        ? `R$ ${(totalSalesValue / 1000).toFixed(1)}K`
+        : "R$ 0K",
+    description: "Valor total de vendas realizadas",
+    icon: DollarSign,
+    color: "text-emerald-500",
+    link: "/member/leads",
+  },
+  {
+    title: "Total em Comissões",
+    value:
+      typeof currentMember?.total_commission === "number"
+        ? `R$ ${currentMember.total_commission.toFixed(2)}`
+        : "R$ 0.00",
+    description: "Valor acumulado em comissões",
+    icon: TrendingUp,
+    color: "text-amber-500",
+    link: "/member/commissions",
+  },
+];
 
-  // Métricas do squad para os cards
-  const squadMetricsCards = [
-    {
-      title: "Membros no Squad",
-      value: squad.length,
-      description: "Membros sob sua liderança",
-      icon: Users,
-      color: "text-blue-500",
-      link: "/member/squad",
-    },
-    {
-      title: "Vendas do Squad",
-      value: `R$ ${(squadMetrics.totalSales / 1000).toFixed(1)}K`,
-      description: "Volume total de vendas do squad",
-      icon: BarChart3,
-      color: "text-purple-500",
-      link: "/member/squad",
-    },
-    {
-      title: "Contatos do Squad",
-      value: squadMetrics.totalContacts,
-      description: "Total de leads cadastrados pelo squad",
-      icon: Phone,
-      color: "text-orange-500",
-      link: "/member/squad",
-    },
-    {
-      title: "Comissões do Squad",
-      value: `R$ ${squadMetrics.totalValue.toFixed(2)}`,
-      description: "Total acumulado pelo squad",
-      icon: DollarSign,
-      color: "text-teal-500",
-      link: "/member/squad",
-    },
-  ];
+const squadMetricsCards = [
+  {
+    title: "Membros no Squad",
+    value: squad?.length ?? 0,
+    description: "Membros sob sua liderança",
+    icon: Users,
+    color: "text-blue-500",
+    link: "/member/squad",
+  },
+  {
+    title: "Vendas do Squad",
+    value:
+      typeof squadMetrics?.totalSales === "number"
+        ? `R$ ${(squadMetrics.totalSales / 1000).toFixed(1)}K`
+        : "R$ 0K",
+    description: "Volume total de vendas do squad",
+    icon: BarChart3,
+    color: "text-purple-500",
+    link: "/member/squad",
+  },
+  {
+    title: "Contatos do Squad",
+    value: squadMetrics?.totalContacts ?? 0,
+    description: "Total de leads cadastrados pelo squad",
+    icon: Phone,
+    color: "text-orange-500",
+    link: "/member/squad",
+  },
+  {
+    title: "Comissões do Squad",
+    value:
+      typeof squadMetrics?.totalValue === "number"
+        ? `R$ ${squadMetrics.totalValue.toFixed(2)}`
+        : "R$ 0.00",
+    description: "Total acumulado pelo squad",
+    icon: DollarSign,
+    color: "text-teal-500",
+    link: "/member/squad",
+  },
+];
 
-  // Formatação do valor para o tooltip do gráfico de comissões
-  const formatCurrency = (value: number) => {
-    return `R$ ${value.toFixed(2)}`;
-  };
+// Formatação do valor para o tooltip do gráfico de comissões
+const formatCurrency = (value: number) => {
+  return typeof value === "number" ? `R$ ${value.toFixed(2)}` : "R$ 0.00";
+};
 
   // Progresso para o próximo nível
-  const levelProgress = getNextLevelProgress(currentMember.grade, currentMember.totalSales);
+  const levelProgress = getNextLevelProgress(currentMember.grade, currentMember.total_sales);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
-          Bem-vindo, {currentMember.name}
+          Bem-vindo, {currentMember.first_name+" "+currentMember.last_name}
         </p>
       </div>
 
@@ -167,7 +180,9 @@ const MemberDashboard: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-amber-500" />
-                <h3 className="font-medium">Seu nível atual: <span className="font-semibold text-primary">{currentMember.grade.charAt(0).toUpperCase() + currentMember.grade.slice(1)}</span></h3>
+                <h3 className="font-medium">Seu nível atual: <span className="font-semibold text-primary"> {currentMember.grade 
+      ? currentMember.grade.charAt(0).toUpperCase() + currentMember.grade.slice(1) 
+      : "Desconhecido"}</span></h3>
               </div>
               
               <div className="space-y-1">
@@ -399,20 +414,23 @@ const MemberDashboard: React.FC = () => {
                           <Users className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                          <div className="font-medium">{member.name}</div>
+                          <div className="font-medium">{member.first_name+" "+member.last_name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {member.phone} • {member.email}
+                            {member.phone} • {member.grade}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="flex items-center gap-1.5">
                           <Badge className={`${gradeColors[member.grade as MemberGrade]}`}>
-                            {member.grade.charAt(0).toUpperCase() + member.grade.slice(1)}
+                            {member.grade 
+                              ? member.grade.charAt(0).toUpperCase() + member.grade.slice(1) 
+                              : "Desconhecido"}
+
                           </Badge>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          R$ {member.totalSales.toFixed(2)} em vendas
+                          R$ {member.total_sales.toFixed(2)} em vendas
                         </div>
                       </div>
                     </div>
@@ -453,9 +471,9 @@ const MemberDashboard: React.FC = () => {
               {squad.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={squad.slice(0, 5).sort((a, b) => b.totalSales - a.totalSales).map(member => ({
-                      name: member.name.split(' ')[0],
-                      vendas: member.totalSales
+                    data={squad.slice(0, 5).sort((a, b) => b.total_sales - a.total_sales).map(member => ({
+                      name: member.first_name.split(' ')[0],
+                      vendas: member.total_sales
                     }))}
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -483,7 +501,10 @@ const MemberDashboard: React.FC = () => {
 };
 
 // Função auxiliar para calcular o progresso para o próximo nível
-function getNextLevelProgress(currentGrade: string, totalSales: number): { percentage: number; text: string } {
+function getNextLevelProgress(
+  currentGrade: string | undefined,
+  totalSales: number
+): { percentage: number; text: string } {
   const levels = {
     start: { min: 0, max: 100000, next: "Standard" },
     standard: { min: 100000, max: 500000, next: "Gold" },
@@ -492,22 +513,37 @@ function getNextLevelProgress(currentGrade: string, totalSales: number): { perce
     diamond: { min: 10000000, max: Infinity, next: null },
   };
 
-  const grade = currentGrade as keyof typeof levels;
+  if (!currentGrade || typeof currentGrade !== "string") {
+    return {
+      percentage: 0,
+      text: "Grau não informado ou inválido",
+    };
+  }
+
+  const grade = currentGrade.toLowerCase() as keyof typeof levels;
   const level = levels[grade];
-  
+
+  if (!level) {
+    return {
+      percentage: 0,
+      text: "Grau desconhecido — verifique o cadastro",
+    };
+  }
+
   if (grade === "diamond") {
     return { percentage: 100, text: "Nível máximo atingido" };
   }
-  
+
   const currentRange = level.max - level.min;
   const currentProgress = totalSales - level.min;
   const percentage = Math.min(100, Math.round((currentProgress / currentRange) * 100));
   const remaining = level.max - totalSales;
-  
+
   return {
     percentage,
     text: `R$ ${(remaining / 1000).toFixed(1)}K para ${level.next}`,
   };
 }
+
 
 export default MemberDashboard;

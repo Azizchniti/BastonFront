@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -25,11 +24,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 const leadFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   phone: z.string().min(10, "Telefone deve ter no mínimo 10 dígitos"),
   source: z.string().min(1, "Origem é obrigatória"),
+  sale_value: z.number().min(1, "Selecione um preço"),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
@@ -48,20 +49,31 @@ const NewLead: React.FC = () => {
     },
   });
 
-  const onSubmit = (values: LeadFormValues) => {
-    if (!user) return;
+  const onSubmit = async (values: LeadFormValues) => {
+    if (!user) {
+      toast.error("Usuário não autenticado.");
+      return;
+    }
 
-    const success = addLead({
-      name: values.name,
-      phone: values.phone,
-      source: values.source,
-      status: "new",
-      memberId: user.id,
-      memberName: user.name,
-    });
+    try {
+      const success = await addLead({
+        name: values.name,
+        phone: values.phone,
+        source: values.source,
+        status: "new",
+        member_id: user.id, 
+        sale_value: values.sale_value,// fix: should be member_id
+      });
 
-    if (success) {
-      navigate("/member/leads");
+      if (success) {
+        toast.success("Lead criado com sucesso!");
+        navigate("/member/leads");
+      } else {
+        toast.error("Erro ao criar o lead.");
+      }
+    } catch (err) {
+      console.error("Erro ao criar lead:", err);
+      toast.error("Erro inesperado ao criar lead.");
     }
   };
 
@@ -130,6 +142,24 @@ const NewLead: React.FC = () => {
                   </FormItem>
                 )}
               />
+                <FormField
+                    control={form.control}
+                      name="sale_value"
+                        render={({ field }) => (
+                           <FormItem>
+                             <FormLabel>Valor da Venda</FormLabel>
+                             <FormControl>
+                                    <Input
+                                      type="number"
+                                      placeholder="Ex: 1500"
+                                      {...field}
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
             </form>
           </Form>
         </CardContent>

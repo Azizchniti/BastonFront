@@ -104,8 +104,7 @@ const [members, setMembers] = useState<Member[]>([]);
     last_name: "",
     cpf: "",
     phone: "",
-    grade: "",
-    uplineId: "",
+    grade: ""
   });
 
   // Filtrar membros baseado na busca
@@ -162,8 +161,7 @@ const [members, setMembers] = useState<Member[]>([]);
 
   const handleSelectChange = (value: string) => {
     setFormData({
-      ...formData,
-      uplineId: value
+      ...formData
     });
   };
 
@@ -173,8 +171,7 @@ const [members, setMembers] = useState<Member[]>([]);
       last_name: "",
       cpf: "",
       phone: "",
-      grade: "",
-      uplineId: "",
+      grade: ""
     });
   };
 
@@ -192,10 +189,10 @@ const [members, setMembers] = useState<Member[]>([]);
         last_name: formData.last_name,
         cpf: formData.cpf,
         phone: formData.phone,
-        upline_id: formData.uplineId || null,
         total_sales: 0,
         total_contacts: 0,
-        total_commission: 0
+        total_commission: 0,
+        upline_id: ""
       });
       setAddDialogOpen(false);
       resetForm();
@@ -220,9 +217,10 @@ const [members, setMembers] = useState<Member[]>([]);
         last_name: formData.last_name,
         cpf: formData.cpf,
         phone: formData.phone,
-        grade: formData.grade,
-        upline_id: formData.uplineId || null,
+        grade: formData.grade
+       
       });
+      console.log("Updating member ID:", selectedMember.id);
       setEditDialogOpen(false);
       setSelectedMember(null);
       resetForm();
@@ -252,8 +250,7 @@ const [members, setMembers] = useState<Member[]>([]);
       last_name: member.last_name,
       grade: member.grade,
       cpf: member.cpf,
-      phone: member.phone,
-      uplineId: member.upline_id || "",
+      phone: member.phone
     });
     setEditDialogOpen(true);
   };
@@ -338,28 +335,7 @@ const [members, setMembers] = useState<Member[]>([]);
                 />
               </div>
               
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="upline" className="text-right">
-                  Upline
-                </Label>
-                <Select
-                  value={formData.uplineId}
-                  onValueChange={handleSelectChange}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione o upline" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* Fixed: Changed empty string to "none" */}
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {members.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.first_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+           
             </div>
             
             <DialogFooter>
@@ -514,7 +490,7 @@ const [members, setMembers] = useState<Member[]>([]);
               </Label>
              <Input
                 id="edit-first-name"
-                name="first"
+                name="first_name"
                 type="text"
                 value={formData.first_name}
                 onChange={handleInputChange}
@@ -561,30 +537,7 @@ const [members, setMembers] = useState<Member[]>([]);
               />
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-upline" className="text-right">
-                Upline
-              </Label>
-              <Select
-                value={formData.uplineId}
-                onValueChange={handleSelectChange}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Selecione o upline" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Fixed: Changed empty string to "none" */}
-                  <SelectItem value="none">Nenhum</SelectItem>
-                  {members
-                    .filter(m => m.id !== selectedMember?.id)
-                    .map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.first_name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
+          
             <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="edit-grade" className="text-right">
               Grau
