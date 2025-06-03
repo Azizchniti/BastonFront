@@ -16,7 +16,7 @@ import { Lead  } from '../../types/lead.types';
 import { LeadService } from "@/services/leads.service";
 
 const gradeColors = {
-  start: "bg-slate-500",
+  beginner: "bg-slate-500",
   standard: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
@@ -24,7 +24,7 @@ const gradeColors = {
 };
 
 const gradeLabels = {
-  start: "Start",
+  beginner: "Beginner",
   standard: "Standard",
   gold: "Gold",
   platinum: "Platinum",
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC = () => {
   }, {} as Record<MemberGrade, number>);
 
   const gradeChartData = [
-    { name: "Start", value: memberGradeData.start || 0, color: "#94a3b8" },
+    { name: "Beginner", value: memberGradeData.beginner || 0, color: "#94a3b8" },
     { name: "Standard", value: memberGradeData.standard || 0, color: "#3b82f6" },
     { name: "Gold", value: memberGradeData.gold || 0, color: "#eab308" },
     { name: "Platinum", value: memberGradeData.platinum || 0, color: "#8b5cf6" },
@@ -161,8 +161,9 @@ const AdminDashboard: React.FC = () => {
     const squads = topLevelMembers.map(headMember => {
       const squadMembers = getMemberSquad(headMember.id);
       const totalSquadMembers = squadMembers.length + 1; // +1 para incluir o próprio cabeça
-      const totalSquadSales = squadMembers.reduce((sum, m) => sum + m.totalSales, 0) + headMember.total_sales;
-      const totalSquadContacts = squadMembers.reduce((sum, m) => sum + m.totalContacts, 0) + headMember.total_contacts;
+      const totalSquadSales = squadMembers.reduce((sum, m) => sum + (m.total_sales || 0), 0) + (headMember.total_sales || 0);
+      const totalSquadContacts = squadMembers.reduce((sum, m) => sum + (m.total_contacts || 0), 0) + (headMember.total_contacts || 0);
+
       
       return {
         id: headMember.id,

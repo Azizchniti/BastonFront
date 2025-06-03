@@ -9,13 +9,13 @@ import { MemberService } from "@/services/members.service";
 // Member context type definition
 type MemberContextType = {
   members: Member[];
-  addMember: (member: Omit<Member, "id" | "createdAt" | "grade" | "totalSales" | "totalContacts" | "totalCommission">) => void;
   updateMember: (id: string, data: Partial<Member>) => void;
   deleteMember: (id: string) => void;
-  getMemberSquad: (memberId: string) => Member[];
-  getSquadMetrics: (memberId: string) => import("@/types").Squad;
-  getTopMembers: () => Member[];
+  getMemberSquad: (memberId: string) => Promise<Member[]>; // <-- updated
+  getSquadMetrics: (memberId: string) => Promise<import("@/types").Squad>; 
+  getTopMembers: () => Promise<Member[]>;
   findMemberPath: (memberId: string) => Member[];
+  getMemberLine: (memberId: string) => number; 
 };
 
 const MemberContext = createContext<MemberContextType | undefined>(undefined);
@@ -30,15 +30,24 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Member management functions
 
-  const updateMember = (id: string, data: Partial<Member>) => {
-    if (memberService.updateMember(id, data)) {
-      setMembers([...memberService["members"]]);
+  const updateMember = async (id: string, data: Partial<Member>) => {
+    try {
+      const updated = await MemberService.updateMember(id, data);
+      setMembers((prev) => prev.map(m => (m.id === id ? updated : m)));
+      toast.success("Member updated");
+    } catch (error) {
+      toast.error("Failed to update member");
     }
   };
 
-  const deleteMember = (id: string) => {
-    if (memberService.deleteMember(id)) {
-      setMembers([...memberService["members"]]);
+  // Delete member
+  const deleteMember = async (id: string) => {
+    try {
+      await MemberService.deleteMember(id);
+      setMembers((prev) => prev.filter(m => m.id !== id));
+      toast.success("Member deleted");
+    } catch (error) {
+      toast.error("Failed to delete member");
     }
   };
 
@@ -55,6 +64,26 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({
     return memberService.getTopMembers();
   };
 
+  const isLine1Member = (memberId: string) => {
+  const member = members.find(m => m.id === memberId);
+  return member ? member.upline_id === null : false;
+};
+
+const isLine2Member = (memberId: string) => {
+  const member = members.find(m => m.id === memberId);
+  if (!member) return false;
+  if (member.upline_id) {
+    const upline = members.find(m => m.id === member.upline_id);
+    return upline ? upline.upline_id === null : false;
+  }
+  return false;
+};
+
+const getMemberLine = (memberId: string): number => {
+  if (isLine1Member(memberId)) return 1;
+  if (isLine2Member(memberId)) return 2;
+  return 0;
+};
   return (
     <MemberContext.Provider
       value={{
@@ -65,6 +94,7 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({
         getSquadMetrics,
         getTopMembers,
         findMemberPath: (memberId: string) => findMemberPath(members, memberId),
+         getMemberLine, 
       }}
     >
       {children}

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
+
 
 const Signup: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +17,10 @@ const Signup: React.FC = () => {
   const [role, setRole] = useState("member");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const uplineId = searchParams.get("upline_id") || undefined;
+  console.log("uplineId from URL:", uplineId);
+
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -27,7 +33,8 @@ const Signup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const user = await signUp(email, password, role, firstName, lastName);
+      const user = await signUp(email, password, role, firstName, lastName, uplineId);
+
         console.log("data:",user)
       if (user) {
         toast.success("Conta criada com sucesso. Verifique seu email para confirmar.");
@@ -119,19 +126,22 @@ const Signup: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="role">Papel</Label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="neo-inset w-full rounded-md border p-2"
-                  required
-                >
-                  <option value="member">Membro</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+                  {!uplineId && (
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Papel</Label>
+                      <select
+                        id="role"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        className="neo-inset w-full rounded-md border p-2"
+                        required
+                      >
+                        <option value="member">Membro</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  )}
+
 
               <Button type="submit" disabled={isLoading} className="w-full transition-all">
                 {isLoading ? (

@@ -6,6 +6,7 @@ import { Lead } from '../types/index';
 // Backend base URL (adjust if needed)
 const API_URL = 'https://pfp-backend-0670.onrender.com/api/leads';
 
+
 export const LeadService = {
   // ✅ Get all leads
   async getAllLeads(): Promise<Lead[]> {

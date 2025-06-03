@@ -8,7 +8,8 @@ export const signUp = async (
   password: string,
   role: string,
   firstName: string,
-  lastName: string
+  lastName: string,
+  upline_id?: string
 ) => {
   try {
     const response = await axios.post(`${API_URL}/signup`, {
@@ -17,6 +18,7 @@ export const signUp = async (
       role,
       firstName,
       lastName,
+       upline_id,
     });
     
     return response.data.user;

@@ -5,6 +5,7 @@ import { Squad } from '@/types';
 // Backend API base URL (adjust if needed)
 const API_URL = 'https://pfp-backend-0670.onrender.com/api/members';
 
+
 export const MemberService = {
   // ✅ Get all members (basic info)
   async getAllMembers(): Promise<Member[]> {

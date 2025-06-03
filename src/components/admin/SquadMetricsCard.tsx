@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/dataUtils";
@@ -10,6 +9,8 @@ interface SquadMetricsCardProps {
 }
 
 const SquadMetricsCard: React.FC<SquadMetricsCardProps> = ({ squad }) => {
+  console.log("Squad data:", squad);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -26,7 +27,7 @@ const SquadMetricsCard: React.FC<SquadMetricsCardProps> = ({ squad }) => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Membros</p>
-            <p className="text-lg font-semibold">{squad.totalMembers}</p>
+            <p className="text-lg font-semibold">{squad.memberCount}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -44,7 +45,7 @@ const SquadMetricsCard: React.FC<SquadMetricsCardProps> = ({ squad }) => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Vendas</p>
-            <p className="text-lg font-semibold">{squad.totalSales}</p>
+            <p className="text-lg font-semibold">{formatCurrency(squad.totalSales)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -53,7 +54,7 @@ const SquadMetricsCard: React.FC<SquadMetricsCardProps> = ({ squad }) => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Comissão Total</p>
-            <p className="text-lg font-semibold">{formatCurrency(squad.totalValue)}</p>
+            <p className="text-lg font-semibold">{formatCurrency(squad.totalCommission)}</p>
           </div>
         </div>
       </CardContent>

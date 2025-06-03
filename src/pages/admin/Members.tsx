@@ -53,7 +53,7 @@ import { Member } from "@/types/member.types";
 import { MemberGrade } from "@/types";
 
 const gradeColors = {
-  start: "bg-slate-500",
+  beginner: "bg-slate-500",
   standard: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
@@ -61,7 +61,7 @@ const gradeColors = {
 };
 
 const gradeLabels = {
-  start: "Start",
+  beginner: "Beginner",
   standard: "Standard",
   gold: "Gold",
   platinum: "Platinum",
@@ -552,7 +552,7 @@ const [members, setMembers] = useState<Member[]>([]);
                 <SelectValue placeholder="Selecione o grau" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="start">Start</SelectItem>
+                <SelectItem value="beginner">Start</SelectItem>
                 <SelectItem value="standard">Standard</SelectItem>
                 <SelectItem value="gold">Gold</SelectItem>
                 <SelectItem value="platinum">Platinum</SelectItem>

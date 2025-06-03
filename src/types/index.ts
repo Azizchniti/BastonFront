@@ -1,7 +1,7 @@
 
 export type UserRole = 'admin' | 'member';
 
-export type MemberGrade = 'start' | 'standard' | 'gold' | 'platinum' | 'diamond';
+export type MemberGrade = 'beginner' | 'standard' | 'gold' | 'platinum' | 'diamond';
 
 export type LeadStatus = 'new' | 'contacted' | 'in-progress' | 'negotiating' | 'closed' | 'lost';
 
@@ -57,24 +57,22 @@ export interface Lead {
 export interface Squad {
   memberId: string;
   memberName: string;
-  totalMembers: number;
+  memberCount: number;
   totalContacts: number;
   totalSales: number;
-  totalValue: number;
+  totalCommission: number;
 }
 
 export interface Commission {
   id: string;
-  memberId: string;
-  memberName: string;
-  leadId: string;
-  leadName: string;
-  saleValue: number;
-  commissionPercentage: number;
-  commissionValue: number;
-  saleDate: Date;
-  paymentDate: Date | null;
-  isPaid: boolean;
+  member_id: string;
+  lead_id: string;
+  sale_value: number;
+  commission_percentage: number;
+  commission_value: number;
+  sale_date: Date;
+  payment_date: Date | null;
+  is_paid: boolean;
 }
 
 export interface MonthlyCommission {

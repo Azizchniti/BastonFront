@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -45,6 +45,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Member, Squad } from "@/types";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { MemberService } from "@/services/members.service";
+
+
 
 const gradeColors = {
   start: "bg-slate-500",
@@ -94,8 +97,8 @@ const SquadPage = () => {
 
   // Filtrar membros baseado na busca
   const filteredMembers = squadMembers.filter(member => 
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.cpf.includes(searchTerm)
   );
 
@@ -152,6 +155,22 @@ const SquadPage = () => {
       phone: ""
     });
   };
+  const [currentMember, setCurrentMember] = useState<Member | null>(null);
+
+useEffect(() => {
+  const fetchCurrentMember = async () => {
+    if (!user) return;
+    try {
+      const member = await MemberService.getMemberById(user.id);
+      setCurrentMember(member);
+    } catch (err) {
+      console.error("Erro ao buscar membro:", err);
+    }
+  };
+
+  fetchCurrentMember();
+}, [user]);
+
 
   // Adicionar um novo membro
   const handleAddMember = () => {
@@ -159,12 +178,14 @@ const SquadPage = () => {
     
     try {
       addMember({
-        name: formData.name,
-        email: formData.email,
-        role: "member",
+        first_name: formData.name,
+        last_name: formData.email,
         cpf: formData.cpf,
         phone: formData.phone,
-        uplineId: user.id,
+        upline_id: user.id,
+        total_sales: 0,
+        total_contacts: 0,
+        total_commission: 0
       });
       setAddDialogOpen(false);
       resetForm();
@@ -343,11 +364,11 @@ const SquadPage = () => {
                 <TableRow>
                   <TableHead 
                     className="cursor-pointer"
-                    onClick={() => requestSort('name')}
+                    onClick={() => requestSort('first_name')}
                   >
                     <div className="flex items-center">
                       Nome
-                      {getSortIcon('name')}
+                      {getSortIcon('first_name')}
                     </div>
                   </TableHead>
                   <TableHead>Telefone</TableHead>
@@ -362,20 +383,20 @@ const SquadPage = () => {
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer text-right"
-                    onClick={() => requestSort('totalSales')}
+                    onClick={() => requestSort('total_sales')}
                   >
                     <div className="flex items-center justify-end">
                       Vendas (R$)
-                      {getSortIcon('totalSales')}
+                      {getSortIcon('total_sales')}
                     </div>
                   </TableHead>
                   <TableHead 
                     className="cursor-pointer text-right"
-                    onClick={() => requestSort('totalContacts')}
+                    onClick={() => requestSort('total_contacts')}
                   >
                     <div className="flex items-center justify-end">
                       Contatos
-                      {getSortIcon('totalContacts')}
+                      {getSortIcon('total_contacts')}
                     </div>
                   </TableHead>
                 </TableRow>
@@ -401,7 +422,7 @@ const SquadPage = () => {
                 ) : (
                   sortedMembers.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell className="font-medium">{member.first_name}</TableCell>
                       <TableCell>{member.phone}</TableCell>
                       <TableCell>
                         <Badge className={`${gradeColors[member.grade]}`}>
@@ -412,9 +433,9 @@ const SquadPage = () => {
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(member.totalSales)}
+                        }).format(member.total_sales)}
                       </TableCell>
-                      <TableCell className="text-right">{member.totalContacts}</TableCell>
+                      <TableCell className="text-right">{member.total_contacts}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -447,27 +468,27 @@ const SquadPage = () => {
                   <div className="relative w-24 h-24 mx-auto">
                     <UserCircle2 className="w-24 h-24 text-primary/20" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className={`w-20 h-20 rounded-full ${gradeColors[(user as Member).grade]} flex items-center justify-center text-white font-semibold`}>
-                        {gradeLabels[(user as Member).grade].charAt(0)}
+                      <div className={`w-20 h-20 rounded-full ${gradeColors[(user as unknown as Member).grade]} flex items-center justify-center text-white font-semibold`}>
+                        {gradeLabels[(user as unknown as Member).grade].charAt(0)}
                       </div>
                     </div>
                   </div>
                   <h3 className="mt-2 font-bold text-lg">
-                    {gradeLabels[(user as Member).grade]}
+                    {gradeLabels[(user as unknown as Member).grade]}
                   </h3>
                 </div>
               </div>
               
               <div className="space-y-2">
-                {(user as Member).grade !== "diamond" && (
+                {(user as unknown as Member).grade !== "diamond" && (
                   <>
                     <div className="flex justify-between text-sm">
                       <span>
-                        Nível atual: {gradeLabels[(user as Member).grade]}
+                        Nível atual: {gradeLabels[(user as unknown as Member).grade]}
                       </span>
                       <span>
                         Próximo nível: {
-                          (user as Member).grade === "start" ? "Standard" :
+                          (user as unknown as Member).grade === "start" ? "Standard" :
                           (user as Member).grade === "standard" ? "Gold" :
                           (user as Member).grade === "gold" ? "Platinum" : "Diamond"
                         }

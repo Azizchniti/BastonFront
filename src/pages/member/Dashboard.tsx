@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, CheckSquare, XSquare, DollarSign, Users, Trophy, TrendingUp, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { Member, MemberGrade } from "@/types";
+import { MemberService } from "@/services/members.service";
 
 // Define grade colors mapping
 const gradeColors = {
@@ -34,8 +35,30 @@ const MemberDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("personal");
   
   // O usuário atual está garantido como sendo um Member pelo layout autenticado
-  const currentMember = user as Member;
+  const [currentMember, setCurrentMember] = useState<Member | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMember = async () => {
+      if (user?.id) {
+        try {
+          const memberData = await MemberService.getMemberById(user.id);
+          setCurrentMember(memberData);
+        } catch (err) {
+          console.error("Failed to fetch member:", err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchMember();
+  }, [user?.id]);
   
+  if (loading || !currentMember) {
+  return <div>Loading member data...</div>;
+}
+
   // Dados do membro
   const memberLeads = leads.filter(lead => lead.member_id === currentMember.id);
   const memberCommissions = getMemberCommissions(currentMember.id);

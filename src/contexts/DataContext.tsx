@@ -99,6 +99,7 @@ const DataContextBridge = ({ children }: { children: React.ReactNode }) => {
       toast.error("Lead não encontrado");
       return;
     }
+    
 
     // Update the lead
     leadContext.updateLead(id, { status: "closed" as LeadStatus, sale_value });

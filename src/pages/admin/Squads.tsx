@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useData } from "@/contexts/DataContext";
 import { Member } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,43 +8,73 @@ import { Input } from "@/components/ui/input";
 import { Users, Search } from "lucide-react";
 import SquadMetricsCard from "@/components/admin/SquadMetricsCard";
 import SquadMemberTree from "@/components/admin/SquadMemberTree";
+import { MemberService } from "@/services/members.service";
+import { toast } from "sonner";
+import { useMemberContext } from "@/contexts/MemberContext";
 
 const AdminSquads: React.FC = () => {
-  const { members, getSquadMetrics } = useData();
+  const { getSquadMetrics } = useMemberContext();
+  const [members, setMembers] = useState<Member[]>([]);
+   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedSquadMetrics, setSelectedSquadMetrics] = useState<any>(null);
+
   
   // Filtrar membros que são raízes (não têm upline) - Linha 1
-  const line1Members = members.filter(member => member.uplineId === null);
+  const line1Members = members.filter(member => member.upline_id === null);
   
   // Filtrar membros da Linha 2 (upline é um membro da Linha 1)
   const line2Members = members.filter(member => {
-    if (!member.uplineId) return false;
-    const uplineMember = members.find(m => m.id === member.uplineId);
-    return uplineMember && uplineMember.uplineId === null;
+    if (!member.upline_id) return false;
+    const uplineMember = members.find(m => m.id === member.upline_id);
+    return uplineMember && uplineMember.upline_id === null;
   });
+
+    useEffect(() => {
+  const loadMembers = async () => {
+    try {
+      const data = await MemberService.getAllMembers();
+      setMembers(data);
+    } catch (error) {
+      toast.error("Erro ao buscar membros");
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadMembers();
+}, []);
   
   // Filtrar por termo de busca
   const filteredMembers = members.filter(member => 
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.phone.includes(searchTerm)
   );
 
   // Selecionar membro
-  const handleSelectMember = (memberId: string) => {
-    setSelectedMemberId(memberId);
-  };
+const handleSelectMember = async (memberId: string) => {
+  setSelectedMemberId(memberId);
+  try {
+    const metrics = await getSquadMetrics(memberId);
+    setSelectedSquadMetrics(metrics);
+  } catch (error) {
+    toast.error("Erro ao buscar métricas do squad");
+  }
+};
 
-  // Obter métricas do squad selecionado
-  const selectedSquadMetrics = selectedMemberId 
-    ? getSquadMetrics(selectedMemberId) 
-    : null;
-  
+
+  console.log("selectedSquadMetrics:", selectedSquadMetrics);
   // Membro selecionado
   const selectedMember = selectedMemberId 
     ? members.find(m => m.id === selectedMemberId) 
     : null;
+
+    const leader = selectedMember
+  ? members.find(m =>
+      m.id === selectedMember.upline_id // if Line 2, find their upline
+    ) ?? selectedMember // fallback to self if already Line 1
+  : null;
 
   return (
     <div className="space-y-6">
@@ -87,8 +117,8 @@ const AdminSquads: React.FC = () => {
                 ) : (
                   line1Members
                     .filter(member => 
-                      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       member.phone.includes(searchTerm)
                     )
                     .map((member) => (
@@ -101,13 +131,13 @@ const AdminSquads: React.FC = () => {
                       >
                         <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center">
                           <span className="text-xs font-medium text-primary">
-                            {member.name.substring(0, 2).toUpperCase()}
+                            {member.first_name.substring(0, 2).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{member.name}</p>
+                          <p className="font-medium truncate">{member.first_name}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {member.email}
+                            {member.last_name}
                           </p>
                         </div>
                         <div className="text-xs px-2 py-0.5 rounded-full bg-muted capitalize">
@@ -125,8 +155,8 @@ const AdminSquads: React.FC = () => {
                 ) : (
                   line2Members
                     .filter(member => 
-                      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       member.phone.includes(searchTerm)
                     )
                     .map((member) => (
@@ -139,13 +169,13 @@ const AdminSquads: React.FC = () => {
                       >
                         <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center">
                           <span className="text-xs font-medium text-primary">
-                            {member.name.substring(0, 2).toUpperCase()}
+                            {member.first_name.substring(0, 2).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{member.name}</p>
+                          <p className="font-medium truncate">{member.first_name}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {member.email}
+                            {member.last_name}
                           </p>
                         </div>
                         <div className="text-xs px-2 py-0.5 rounded-full bg-muted capitalize">
@@ -162,9 +192,14 @@ const AdminSquads: React.FC = () => {
         <div className="md:col-span-2 space-y-6">
           {selectedMemberId ? (
             <>
-              {selectedSquadMetrics && (
-                <SquadMetricsCard squad={selectedSquadMetrics} />
-              )}
+            {selectedSquadMetrics && (
+              <SquadMetricsCard
+                squad={{
+                  ...selectedSquadMetrics,
+                  memberName: `${leader?.first_name} ${leader?.last_name}`,
+                }}
+              />
+            )}
               
               <Card>
                 <CardHeader>
@@ -180,13 +215,13 @@ const AdminSquads: React.FC = () => {
                         <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-md mb-2">
                           <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center">
                             <span className="text-xs font-medium text-primary">
-                              {selectedMember.name.substring(0, 2).toUpperCase()}
+                              {selectedMember.first_name.substring(0, 2).toUpperCase()}
                             </span>
                           </div>
                           <div>
-                            <p className="font-medium">{selectedMember.name}</p>
+                            <p className="font-medium">{selectedMember.first_name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {selectedMember.email}
+                              {selectedMember.last_name}
                             </p>
                           </div>
                           <div className="ml-auto text-xs px-2 py-0.5 rounded-full bg-muted capitalize">

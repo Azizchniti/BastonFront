@@ -1,9 +1,9 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Commission, MonthlyCommission } from "@/types";
 import { toast } from "sonner";
 import { MOCK_COMMISSIONS } from "@/data/mockData";
-import CommissionService from "@/services/commissionService";
+import {CommissionService} from "@/services/commission.service";
 
 // Commission context type definition
 type CommissionContextType = {
@@ -20,7 +20,7 @@ type CommissionContextType = {
   getCommissionsForecast: (startDate?: Date, endDate?: Date) => {
     nextPaymentDate: Date;
     totalPendingAmount: number;
-    pendingBatches: number;
+   // pendingBatches: number;
     membersWithPending: number;
   };
 };
@@ -34,14 +34,28 @@ export const CommissionProvider: React.FC<{
   children,
   memberCommissionService = null,
 }) => {
-  const [commissions, setCommissions] = useState<Commission[]>(MOCK_COMMISSIONS);
+  //const [commissions, setCommissions] = useState<Commission[]>(MOCK_COMMISSIONS);
+  const [commissions, setCommissions] = useState<Commission[]>([]);
   
   // Instantiate the service
-  const commissionService = new CommissionService(commissions);
+  
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const data = await CommissionService.getAll();
+      setCommissions(data);
+    } catch (error) {
+      toast.error("Failed to fetch commissions");
+      console.error(error);
+    }
+  };
+
+  fetchData();
+}, []);
 
   // Commission management functions
   const getMemberCommissions = (memberId: string) => {
-    return commissions.filter(commission => commission.memberId === memberId);
+    return commissions.filter(commission => commission.member_id === memberId);
   };
 
   const getMemberMonthlyCommissions = (memberId: string): MonthlyCommission[] => {
@@ -52,16 +66,16 @@ export const CommissionProvider: React.FC<{
   };
 
   const updateCommissionPaymentStatus = (id: string, isPaid: boolean, paymentDate: Date | null) => {
-    if (commissionService.updateCommissionPaymentStatus(id, isPaid, paymentDate)) {
-      setCommissions([...commissionService["commissions"]]);
+    if (CommissionService.updateCommissionPaymentStatus(id, isPaid, paymentDate)) {
+      setCommissions([...CommissionService["commissions"]]);
       return true;
     }
     return false;
   };
 
   const updateMemberMonthlyCommissions = (memberId: string, month: number, year: number, isPaid: boolean) => {
-    if (commissionService.updateMemberMonthlyCommissions(memberId, month, year, isPaid)) {
-      setCommissions([...commissionService["commissions"]]);
+    if (CommissionService.updateMemberMonthlyCommissions(memberId, month, year, isPaid)) {
+      setCommissions([...CommissionService["commissions"]]);
       return true;
     }
     return false;
@@ -69,16 +83,16 @@ export const CommissionProvider: React.FC<{
 
   // New function to calculate commission based on the new rules
   const calculateCommission = (saleValue: number, memberLine: number, uplineGrade?: string | null) => {
-    return commissionService.calculateCommission(saleValue, memberLine, uplineGrade);
+    return CommissionService.calculateCommission(saleValue, memberLine, uplineGrade);
   };
 
   // Forecast functions
   const getNextPaymentDate = () => {
-    return commissionService.getNextPaymentDate();
+    return CommissionService.getNextPaymentDate();
   };
 
   const getCommissionsForecast = (startDate?: Date, endDate?: Date) => {
-    return commissionService.getCommissionsForecast(startDate, endDate);
+    return CommissionService.getCommissionsForecast(startDate, endDate);
   };
 
   return (

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { Member } from "@/types";
@@ -20,10 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { MemberService } from "@/services/members.service";
 
 // Define grade colors mapping
 const gradeColors = {
-  start: "bg-slate-500",
+  beginner: "bg-slate-500",
   standard: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
@@ -31,7 +32,7 @@ const gradeColors = {
 };
 
 const gradeLabels = {
-  start: "Start",
+  beginner: "Beginner",
   standard: "Standard",
   gold: "Gold",
   platinum: "Platinum",
@@ -40,13 +41,14 @@ const gradeLabels = {
 
 const MemberMembersPage = () => {
   const { user } = useAuth();
-  const { members, addMember, updateMember, deleteMember } = useData();
+  const {  addMember, updateMember, deleteMember } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   // Form state
   const [formData, setFormData] = useState({
     name: "",
@@ -54,16 +56,32 @@ const MemberMembersPage = () => {
     cpf: "",
     phone: "",
   });
+;
+
+    useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const data = await MemberService.getAllMembers();
+        setMembers(data);
+      } catch (error) {
+        toast.error("Erro ao buscar membros");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadMembers();
+  }, []);
+    console.log("All members:", members)
 
   // Get members in user's squad (where uplineId is the user's id)
   const squadMembers = members.filter(member => 
-    member.uplineId === user?.id
+    member.upline_id === user?.id
   );
   
   // Filter based on search
   const filteredMembers = squadMembers.filter(member => 
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.cpf.includes(searchTerm)
   );
 
@@ -86,29 +104,7 @@ const MemberMembersPage = () => {
   };
 
   // Add a new member
-  const handleAddMember = () => {
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.cpf || !formData.phone) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    
-    try {
-      addMember({
-        name: formData.name,
-        email: formData.email,
-        role: "member",
-        cpf: formData.cpf,
-        phone: formData.phone,
-        uplineId: user?.id || null,
-      });
-      setAddDialogOpen(false);
-      resetForm();
-      toast.success("Membro adicionado com sucesso");
-    } catch (error) {
-      toast.error("Erro ao adicionar membro");
-    }
-  };
+
 
   // Edit an existing member
   const handleEditMember = () => {
@@ -122,8 +118,8 @@ const MemberMembersPage = () => {
     
     try {
       updateMember(selectedMember.id, {
-        name: formData.name,
-        email: formData.email,
+        first_name: formData.name,
+        last_name: formData.email,
         cpf: formData.cpf,
         phone: formData.phone,
       });
@@ -154,8 +150,8 @@ const MemberMembersPage = () => {
   const handleEditDialogOpen = (member: Member) => {
     setSelectedMember(member);
     setFormData({
-      name: member.name,
-      email: member.email,
+      name: member.first_name,
+      email: member.last_name,
       cpf: member.cpf,
       phone: member.phone,
     });
@@ -168,6 +164,17 @@ const MemberMembersPage = () => {
     setDeleteDialogOpen(true);
   };
 
+  const handleGenerateInvite = () => {
+  if (!user) return;
+
+  const baseUrl = window.location.origin;
+  const inviteLink = `${baseUrl}/signup?upline_id=${user.id}`;
+  
+  navigator.clipboard.writeText(inviteLink);
+  toast.success("Link copiado! Envie este link para seu associado.");
+};
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -175,83 +182,11 @@ const MemberMembersPage = () => {
         
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="space-x-2">
+            <Button className="space-x-2" onClick={handleGenerateInvite}>
               <UserPlus className="h-4 w-4" />
-              <span>Novo Membro</span>
+              <span>Gerar link de convite</span>
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adicionar Novo Membro</DialogTitle>
-              <DialogDescription>
-                Preencha os dados para cadastrar um novo membro no seu squad.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nome
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cpf" className="text-right">
-                  CPF
-                </Label>
-                <Input
-                  id="cpf"
-                  name="cpf"
-                  value={formData.cpf}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Telefone
-                </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="button" onClick={handleAddMember}>
-                Adicionar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
         </Dialog>
       </div>
       
@@ -282,7 +217,7 @@ const MemberMembersPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Sobrenome</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Graduação</TableHead>
                   <TableHead className="text-right">Vendas (R$)</TableHead>
@@ -304,8 +239,8 @@ const MemberMembersPage = () => {
                 ) : (
                   filteredMembers.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell>{member.email}</TableCell>
+                      <TableCell className="font-medium">{member.first_name}</TableCell>
+                      <TableCell>{member.last_name}</TableCell>
                       <TableCell>{member.phone}</TableCell>
                       <TableCell>
                         <Badge className={`${gradeColors[member.grade]}`}>
@@ -316,9 +251,9 @@ const MemberMembersPage = () => {
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(member.totalSales)}
+                        }).format(member.total_sales)}
                       </TableCell>
-                      <TableCell className="text-right">{member.totalContacts}</TableCell>
+                      <TableCell className="text-right">{member.total_contacts}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <Button
@@ -428,7 +363,7 @@ const MemberMembersPage = () => {
           <DialogHeader>
             <DialogTitle>Excluir Membro</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir {selectedMember?.name}? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir {selectedMember?.first_name}? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           
