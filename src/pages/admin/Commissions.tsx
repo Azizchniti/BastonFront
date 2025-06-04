@@ -32,6 +32,7 @@ const AdminCommissions = () => {
   const [forecastMonth, setForecastMonth] = useState<number>(new Date().getMonth() + 1);
   const [members, setMembers] = useState<Member[]>([]);
    const [loading, setLoading] = useState<boolean>(true);
+   const { leads } = useData();
    
   // Get the forecast data based on selected period
   const forecast = useMemo(() => {
@@ -68,8 +69,8 @@ const AdminCommissions = () => {
 
   // Agrupar comissões por membro e mês
   const commissionGroups = useMemo(() => 
-    groupCommissionsByMemberAndMonth(commissions,members),
-    [commissions,members]
+    groupCommissionsByMemberAndMonth(commissions,members,leads),
+    [commissions,members,leads]
   );
   
   // Anos e meses disponíveis para filtro

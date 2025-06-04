@@ -18,16 +18,26 @@ const CommissionTable: React.FC<CommissionTableProps> = ({
   commissions,
   showActions = false
 }) => {
-  const { updateCommissionPaymentStatus } = useData();
+  const { updateCommissionPaymentStatus ,members , leads} = useData();
+
+  const getMemberNameById = (memberId: string) => {
+  const member = members?.find((m) => m.id === memberId);
+  return member ? `${member.first_name} ${member.last_name}` : "Membro não encontrado";
+};
+
+  const getLeadNameById = (leadId: string) => {
+  const lead = leads?.find((l) => l.id === leadId);
+  return lead ? lead.name : "Lead não encontrado";
+};
   
   const handleMarkAsPaid = (commission: Commission) => {
     updateCommissionPaymentStatus(commission.id, true, new Date());
-    toast.success(`Comissão de ${commission.memberName} marcada como paga!`);
+    toast.success(`Comissão de ${getMemberNameById(commission.member_id)} marcada como paga!`);
   };
 
   const handleMarkAsUnpaid = (commission: Commission) => {
     updateCommissionPaymentStatus(commission.id, false, null);
-    toast.success(`Status de pagamento da comissão de ${commission.memberName} atualizado!`);
+    toast.success(`Status de pagamento da comissão de ${getMemberNameById(commission.member_id)} atualizado!`);
   };
 
   const formatDate = (date: Date) => {
@@ -62,14 +72,14 @@ const CommissionTable: React.FC<CommissionTableProps> = ({
         <TableBody>
           {commissions.map((commission) => (
             <TableRow key={commission.id}>
-              <TableCell className="font-medium">{commission.memberName}</TableCell>
-              <TableCell>{commission.leadName}</TableCell>
-              <TableCell>{formatDate(commission.saleDate)}</TableCell>
-              <TableCell>{formatCurrency(commission.saleValue)}</TableCell>
-              <TableCell>{commission.commissionPercentage}%</TableCell>
-              <TableCell className="font-medium">{formatCurrency(commission.commissionValue)}</TableCell>
+              <TableCell className="font-medium">${getMemberNameById(commission.member_id)}</TableCell>
+              <TableCell>{getLeadNameById(commission.lead_id)}</TableCell>
+              <TableCell>{formatDate(commission.sale_date)}</TableCell>
+              <TableCell>{formatCurrency(commission.sale_value)}</TableCell>
+              <TableCell>{commission.commission_percentage}%</TableCell>
+              <TableCell className="font-medium">{formatCurrency(commission.commission_value)}</TableCell>
               <TableCell>
-                {commission.isPaid ? (
+                {commission.is_paid ? (
                   <Badge variant="success" className="bg-green-100 text-green-800">
                     <CheckCircle2 className="mr-1 h-3 w-3" /> Paga
                   </Badge>
@@ -81,7 +91,7 @@ const CommissionTable: React.FC<CommissionTableProps> = ({
               </TableCell>
               {showActions && (
                 <TableCell>
-                  {commission.isPaid ? (
+                  {commission.is_paid ? (
                     <Button 
                       variant="outline" 
                       size="sm"

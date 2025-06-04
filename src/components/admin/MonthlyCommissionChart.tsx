@@ -21,7 +21,7 @@ export const MonthlyCommissionChart: React.FC<MonthlyCommissionChartProps> = ({ 
     
     // Agrupar comissões por mês
     commissions.forEach(commission => {
-      const date = new Date(commission.saleDate);
+      const date = new Date(commission.sale_date);
       const monthYear = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
       
       if (!monthlyData[monthYear]) {
@@ -33,12 +33,12 @@ export const MonthlyCommissionChart: React.FC<MonthlyCommissionChartProps> = ({ 
         };
       }
       
-      monthlyData[monthYear].total += commission.commissionValue;
+      monthlyData[monthYear].total += commission.commission_value;
       
-      if (commission.isPaid) {
-        monthlyData[monthYear].paid += commission.commissionValue;
+      if (commission.is_paid) {
+        monthlyData[monthYear].paid += commission.commission_value;
       } else {
-        monthlyData[monthYear].pending += commission.commissionValue;
+        monthlyData[monthYear].pending += commission.commission_value;
       }
     });
     
