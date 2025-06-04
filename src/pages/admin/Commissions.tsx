@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +17,9 @@ import {
   getAvailableMonths, 
   getMonthName 
 } from "@/utils/dataUtils";
+import { Member } from "@/types";
+import { MemberService } from "@/services/members.service";
+import { toast } from "sonner";
 
 const AdminCommissions = () => {
   const { commissions, getNextPaymentDate, getCommissionsForecast } = useData();
@@ -27,7 +30,9 @@ const AdminCommissions = () => {
   const [forecastPeriod, setForecastPeriod] = useState<"next" | "year" | "month">("next");
   const [forecastYear, setForecastYear] = useState<number>(new Date().getFullYear());
   const [forecastMonth, setForecastMonth] = useState<number>(new Date().getMonth() + 1);
-  
+  const [members, setMembers] = useState<Member[]>([]);
+   const [loading, setLoading] = useState<boolean>(true);
+   
   // Get the forecast data based on selected period
   const forecast = useMemo(() => {
     if (forecastPeriod === "next") {
@@ -45,11 +50,26 @@ const AdminCommissions = () => {
     }
     return getCommissionsForecast();
   }, [forecastPeriod, forecastYear, forecastMonth, getCommissionsForecast]);
-  
+
+    useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        const data = await MemberService.getAllMembers();
+        setMembers(data);
+      } catch (error) {
+        toast.error("Erro ao buscar membros");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadMembers();
+  }, []);
+  console.log('Membros disponíveis:', members);
+
   // Agrupar comissões por membro e mês
   const commissionGroups = useMemo(() => 
-    groupCommissionsByMemberAndMonth(commissions),
-    [commissions]
+    groupCommissionsByMemberAndMonth(commissions,members),
+    [commissions,members]
   );
   
   // Anos e meses disponíveis para filtro
@@ -91,6 +111,9 @@ const AdminCommissions = () => {
     commissionGroups.reduce((sum, group) => sum + group.totalValue, 0),
     [commissionGroups]
   );
+  console.log("total commission value : ",totalCommissionValue);
+  console.log("commissionGroups:", commissionGroups);
+
 
   const paidCount = useMemo(() => 
     commissionGroups.filter(g => g.isPaid).length,

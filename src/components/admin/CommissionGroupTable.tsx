@@ -16,7 +16,13 @@ interface CommissionGroupTableProps {
 const CommissionGroupTable: React.FC<CommissionGroupTableProps> = ({ commissionGroups }) => {
   const { updateMemberMonthlyCommissions } = useData();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  
+  const { leads } = useData();
+
+  const getLeadNameById = (leadId: string) => {
+  const lead = leads?.find((l) => l.id === leadId);
+  return lead ? lead.name : "Lead não encontrado";
+};
+
   const toggleExpand = (groupId: string) => {
     setExpandedGroups(prev => ({
       ...prev,
@@ -77,7 +83,7 @@ const CommissionGroupTable: React.FC<CommissionGroupTableProps> = ({ commissionG
                 </TableCell>
                 <TableCell className="font-medium">{group.memberName}</TableCell>
                 <TableCell>{getMonthName(group.month)}/{group.year}</TableCell>
-                <TableCell>{group.isPaid && group.commissions[0].paymentDate ? formatDate(group.commissions[0].paymentDate) : "-"}</TableCell>
+                <TableCell>{group.isPaid && group.commissions[0].payment_date ? formatDate(group.commissions[0].payment_date) : "-"}</TableCell>
                 <TableCell>{group.commissions.length}</TableCell>
                 <TableCell className="font-semibold">{formatCurrency(group.totalValue)}</TableCell>
                 <TableCell>
@@ -122,12 +128,12 @@ const CommissionGroupTable: React.FC<CommissionGroupTableProps> = ({ commissionG
                 <TableRow key={commission.id} className="bg-muted/30">
                   <TableCell></TableCell>
                   <TableCell colSpan={2} className="pl-8">
-                    <span className="text-muted-foreground">Lead:</span> {commission.leadName}
+                   <span className="text-muted-foreground">Lead:</span> {getLeadNameById(commission.lead_id)}
                   </TableCell>
-                  <TableCell>{formatDate(commission.saleDate)}</TableCell>
-                  <TableCell>{formatCurrency(commission.saleValue)}</TableCell>
-                  <TableCell>{formatCurrency(commission.commissionValue)}</TableCell>
-                  <TableCell>{commission.commissionPercentage}%</TableCell>
+                  <TableCell>{formatDate(commission.sale_date)}</TableCell>
+                  <TableCell>{formatCurrency(commission.sale_value)}</TableCell>
+                  <TableCell>{formatCurrency(commission.commission_value)}</TableCell>
+                  <TableCell>{commission.commission_percentage}%</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               ))}

@@ -1,17 +1,19 @@
 
-import { Member, MemberGrade, LeadStatus, Commission, CommissionGroup } from "@/types";
+import { Member, MemberGrade, LeadStatus, Commission, CommissionGroup, Lead } from "@/types";
+
 
 // Funções auxiliares
 export const generateId = () => `id-${Math.random().toString(36).substr(2, 9)}`;
+
 
 export const calculateMemberGrade = (totalSales: number): MemberGrade => {
   if (totalSales >= 10000000) return "diamond";
   if (totalSales >= 1000000) return "platinum";
   if (totalSales >= 500000) return "gold";
   if (totalSales >= 100000) return "standard";
-  return "start";
+  return "beginner";
 };
-
+   
 export const findMemberPath = (members: Member[], memberId: string): Member[] => {
   const result: Member[] = [];
   let currentId = memberId;
@@ -48,6 +50,7 @@ export const groupCommissionsByMonth = (commissions: any[]) => {
   const monthlyGroups: Record<string, any[]> = {};
   
   commissions.forEach(commission => {
+
     const date = new Date(commission.saleDate);
     const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
@@ -62,31 +65,40 @@ export const groupCommissionsByMonth = (commissions: any[]) => {
 };
 
 // Função para agrupar comissões por membro e por mês
-export const groupCommissionsByMemberAndMonth = (commissions: Commission[]): CommissionGroup[] => {
-  // Primeiro, agrupe por memberId + mês/ano
+export const groupCommissionsByMemberAndMonth = (
+  commissions: Commission[],
+  members: Member[],
+  leads: Lead[]
+): CommissionGroup[] => {
   const groupedByMemberAndMonth: Record<string, Commission[]> = {};
-  
+
   commissions.forEach(commission => {
-    const date = new Date(commission.saleDate);
+    const date = new Date(commission.sale_date);
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    const key = `${commission.memberId}-${year}-${month}`;
-    
+    const key = `${commission.member_id}|${year}|${month}`;
+
+
     if (!groupedByMemberAndMonth[key]) {
       groupedByMemberAndMonth[key] = [];
     }
-    
+
     groupedByMemberAndMonth[key].push(commission);
   });
-  
-  // Converter em array de objetos CommissionGroup
+
+
   return Object.entries(groupedByMemberAndMonth).map(([key, commissions]) => {
-    const [memberId, year, month] = key.split('-');
-    const totalValue = commissions.reduce((sum, commission) => sum + commission.commissionValue, 0);
-    const isPaid = commissions.every(commission => commission.isPaid);
-    const memberName = commissions[0].memberName;
-    const dueDate = new Date(Number(year), Number(month), 10); // Dia 10 do mês seguinte
-    
+
+  const [memberId, year, month] = key.split('|');
+
+
+    const totalValue = commissions.reduce((sum, commission) => sum + commission.commission_value, 0);
+    const isPaid = commissions.every(commission => commission.is_paid);
+    const member = members.find(m => m.id === memberId);
+ 
+    const memberName = member ? `${member.first_name} ${member.last_name}` : memberId;
+    const dueDate = new Date(Number(year), Number(month), 10);
+
     return {
       id: key,
       memberId,
@@ -100,6 +112,7 @@ export const groupCommissionsByMemberAndMonth = (commissions: Commission[]): Com
     };
   });
 };
+
 
 // Função para filtrar comissões por período
 export const filterCommissionsByPeriod = (
