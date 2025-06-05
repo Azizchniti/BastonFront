@@ -40,21 +40,32 @@ export const CommissionService = {
     return false;
   },
 
-  updateMemberMonthlyCommissions: (memberId: string, month: number, year: number, isPaid: boolean): boolean => {
-    let updated = false;
-    commissions = commissions.map(c => {
-      if (
-        c.member_id === memberId &&
-        new Date(c.sale_date).getMonth() + 1 === month &&
-        new Date(c.sale_date).getFullYear() === year
-      ) {
-        updated = true;
-        return { ...c, isPaid };
-      }
-      return c;
+updateMemberMonthlyCommissions: async (
+  memberId: string,
+  isPaid: boolean
+): Promise<boolean> => {
+  try {
+    const res = await fetch(`${API_URL}/member/${memberId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ is_paid: isPaid }),
     });
-    return updated;
-  },
+
+    if (!res.ok) {
+      console.error("Failed to update commissions", await res.json());
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error updating commissions:", err);
+    return false;
+  }
+}
+
+,
 
   calculateCommission: (saleValue: number, memberLine: number, uplineGrade?: string | null) => {
     const baseRate = 0.1;

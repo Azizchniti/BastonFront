@@ -40,7 +40,7 @@ type DataContextType = {
   changeStatus: (id: string, status: LeadStatus) => Promise<boolean>;
   findLead: (id: string) => Lead | undefined;
   updateCommissionPaymentStatus: (id: string, isPaid: boolean, paymentDate: Date | null) => boolean;
-  updateMemberMonthlyCommissions: (memberId: string, month: number, year: number, isPaid: boolean) => boolean;
+  updateMemberMonthlyCommissions: (memberId: string, isPaid: boolean) => Promise<boolean>;
   getNextPaymentDate: () => Date;
   getCommissionsForecast: (startDate?: Date, endDate?: Date) => {
     nextPaymentDate: Date;

@@ -11,7 +11,7 @@ type CommissionContextType = {
   getMemberCommissions: (memberId: string) => Commission[];
   getMemberMonthlyCommissions: (memberId: string) => MonthlyCommission[];
   updateCommissionPaymentStatus: (id: string, isPaid: boolean, paymentDate: Date | null) => boolean;
-  updateMemberMonthlyCommissions: (memberId: string, month: number, year: number, isPaid: boolean) => boolean;
+  updateMemberMonthlyCommissions: (memberId: string, isPaid: boolean) => Promise<boolean>;
   getNextPaymentDate: () => Date;
   calculateCommission: (saleValue: number, memberLine: number, uplineGrade?: string | null) => {
     memberCommission: number;
@@ -73,13 +73,21 @@ useEffect(() => {
     return false;
   };
 
-  const updateMemberMonthlyCommissions = (memberId: string, month: number, year: number, isPaid: boolean) => {
-    if (CommissionService.updateMemberMonthlyCommissions(memberId, month, year, isPaid)) {
-      setCommissions([...CommissionService["commissions"]]);
-      return true;
-    }
-    return false;
-  };
+const updateMemberMonthlyCommissions = async (
+  memberId: string,
+  isPaid: boolean
+): Promise<boolean> => {
+  const success = await CommissionService.updateMemberMonthlyCommissions(memberId, isPaid);
+
+  if (success) {
+    const updated = await CommissionService.getAll(); // Refetch from backend
+    setCommissions(updated);
+    return true;
+  }
+
+  return false;
+};
+
 
   // New function to calculate commission based on the new rules
   const calculateCommission = (saleValue: number, memberLine: number, uplineGrade?: string | null) => {

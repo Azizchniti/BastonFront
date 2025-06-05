@@ -65,7 +65,7 @@ const AdminCommissions = () => {
     };
     loadMembers();
   }, []);
-  console.log('Membros disponíveis:', members);
+
 
   // Agrupar comissões por membro e mês
   const commissionGroups = useMemo(() => 

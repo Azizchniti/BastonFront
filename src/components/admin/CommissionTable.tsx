@@ -8,14 +8,14 @@ import { CheckCircle2, AlertCircle, Receipt, WalletCards } from "lucide-react";
 import { formatCurrency } from "@/utils/dataUtils";
 import { useData } from "@/contexts/DataContext";
 import { toast } from "sonner";
-
+const { commissions } = useData();
 interface CommissionTableProps {
-  commissions: Commission[];
+
   showActions?: boolean;
 }
 
 const CommissionTable: React.FC<CommissionTableProps> = ({ 
-  commissions,
+
   showActions = false
 }) => {
   const { updateCommissionPaymentStatus ,members , leads} = useData();

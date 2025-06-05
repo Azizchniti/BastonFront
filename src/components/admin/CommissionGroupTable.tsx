@@ -8,6 +8,7 @@ import { CheckCircle2, AlertCircle, ChevronDown, ChevronUp, Receipt } from "luci
 import { formatCurrency, formatDate, getMonthName } from "@/utils/dataUtils";
 import { useData } from "@/contexts/DataContext";
 import { toast } from "sonner";
+import { useCommissionContext } from "@/contexts/CommissionContext";
 
 interface CommissionGroupTableProps {
   commissionGroups: CommissionGroup[];
@@ -30,17 +31,25 @@ const CommissionGroupTable: React.FC<CommissionGroupTableProps> = ({ commissionG
     }));
   };
   
-  const handleMarkAsPaid = (group: CommissionGroup) => {
-    if (updateMemberMonthlyCommissions(group.memberId, group.month, group.year, true)) {
-      toast.success(`Comissões de ${group.memberName} para ${getMonthName(group.month)}/${group.year} marcadas como pagas!`);
+const handleMarkAsPaid = async (group: CommissionGroup) => {
+  const success = await updateMemberMonthlyCommissions(group.memberId, true);
+  if (success) {
+    toast.success(`Comissões de ${group.memberName} para ${getMonthName(group.month)}/${group.year} marcadas como pagas!`);
+  } else {
+    toast.error("Erro ao marcar como paga.");
+  }
+};
+
+
+  const handleMarkAsUnpaid = async (group: CommissionGroup) => {
+    const success = await updateMemberMonthlyCommissions(group.memberId, false);
+    if (success) {
+      toast.success(`Status de pagamento das comissões de ${group.memberName} para ${getMonthName(group.month)}/${group.year} atualizado!`);
+    } else {
+      toast.error("Erro ao atualizar status de pagamento.");
     }
   };
 
-  const handleMarkAsUnpaid = (group: CommissionGroup) => {
-    if (updateMemberMonthlyCommissions(group.memberId, group.month, group.year, false)) {
-      toast.success(`Status de pagamento das comissões de ${group.memberName} para ${getMonthName(group.month)}/${group.year} atualizado!`);
-    }
-  };
 
   if (commissionGroups.length === 0) {
     return (
@@ -133,7 +142,7 @@ const CommissionGroupTable: React.FC<CommissionGroupTableProps> = ({ commissionG
                   <TableCell>{formatDate(commission.sale_date)}</TableCell>
                   <TableCell>{formatCurrency(commission.sale_value)}</TableCell>
                   <TableCell>{formatCurrency(commission.commission_value)}</TableCell>
-                  <TableCell>{commission.commission_percentage}%</TableCell>
+                  <TableCell>{commission.commission_percentage *100}%</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               ))}
