@@ -22,12 +22,17 @@ import AdminCommissions from "./pages/admin/Commissions";
 import AdminGraduation from "./pages/admin/Graduation";
 import AdminMural from "./pages/admin/Mural";
 
+
+
 // Member pages
 import MemberDashboard from "./pages/member/Dashboard";
 import MemberMembers from "./pages/member/Members";
+import MemberCommissions from "./pages/member/Commissions";
 import MemberLeads from "./pages/member/Leads";
 import NewLead from "./pages/member/NewLead";
+import MemberMural from "./pages/member/Mural";
 import Signup from "./pages/Signup";
+import { AnnouncementProvider } from "./contexts/AnnouncementContext";
 
 const queryClient = new QueryClient();
 
@@ -104,7 +109,9 @@ const App = () => (
                 path="/admin/mural" 
                 element={
                   <AuthenticatedLayout requiredRole="admin">
+                  <AnnouncementProvider>
                     <AdminMural />
+                </AnnouncementProvider>
                   </AuthenticatedLayout>
                 } 
               />
@@ -177,7 +184,7 @@ const App = () => (
                 path="/member/commissions" 
                 element={
                   <AuthenticatedLayout requiredRole="member">
-                    <div>Página de Comissões (Membro)</div>
+                    <MemberCommissions/>
                   </AuthenticatedLayout>
                 } 
               />
@@ -187,6 +194,16 @@ const App = () => (
                 element={
                   <AuthenticatedLayout requiredRole="member">
                     <div>Página de Ranking (Membro)</div>
+                  </AuthenticatedLayout>
+                } 
+              />
+              <Route 
+                path="/member/mural" 
+                element={
+                  <AuthenticatedLayout requiredRole="member">
+                    <AnnouncementProvider>
+                      <MemberMural/>
+                    </AnnouncementProvider>
                   </AuthenticatedLayout>
                 } 
               />

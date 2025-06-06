@@ -133,6 +133,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: Trophy,
     },
     {
+      title: "Mural",
+      href: "/member/mural",
+      icon: Megaphone,
+    },
+    {
       title: "Graduação",
       href: "/member/grade",
       icon: GraduationCap,

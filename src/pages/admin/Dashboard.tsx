@@ -86,7 +86,7 @@ const AdminDashboard: React.FC = () => {
   const totalMembers = members.length;
   const totalLeads = leads.length;
   const totalCommissions = commissions.length;
-  const paidCommissions = commissions.filter(c => c.isPaid).length;
+  const paidCommissions = commissions.filter(c => c.is_paid).length;
   
   
   // Calcular estatísticas de leads

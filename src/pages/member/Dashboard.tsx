@@ -37,6 +37,10 @@ const MemberDashboard: React.FC = () => {
   // O usuário atual está garantido como sendo um Member pelo layout autenticado
   const [currentMember, setCurrentMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
+  const getLeadNameById = (leadId: string) => {
+  const lead = leads?.find((l) => l.id === leadId);
+  return lead ? lead.name : "Lead não encontrado";
+};
 
   useEffect(() => {
     const fetchMember = async () => {
@@ -169,8 +173,8 @@ const squadMetricsCards = [
   {
     title: "Comissões do Squad",
     value:
-      typeof squadMetrics?.totalValue === "number"
-        ? `R$ ${squadMetrics.totalValue.toFixed(2)}`
+      typeof squadMetrics?.totalSales === "number"
+        ? `R$ ${squadMetrics.totalSales.toFixed(2)}`
         : "R$ 0.00",
     description: "Total acumulado pelo squad",
     icon: DollarSign,
@@ -351,17 +355,17 @@ const formatCurrency = (value: number) => {
                   {memberCommissions.slice(0, 5).map((commission) => (
                     <div key={commission.id} className="flex items-center justify-between p-3 rounded-lg bg-accent/50">
                       <div>
-                        <div className="font-medium">{commission.leadName}</div>
+                        <div className="font-medium">{getLeadNameById(commission.lead_id)}</div>
                         <div className="text-xs text-muted-foreground">
-                          Venda de R$ {commission.saleValue.toFixed(2)} • {commission.commissionPercentage}%
+                          Venda de R$ {commission.sale_value.toFixed(2)} • {commission.commission_percentage}%
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-green-600">
-                          +R$ {commission.commissionValue.toFixed(2)}
+                          +R$ {commission.commission_value.toFixed(2)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(commission.saleDate).toLocaleDateString("pt-BR")}
+                          {new Date(commission.sale_date).toLocaleDateString("pt-BR")}
                         </div>
                       </div>
                     </div>
