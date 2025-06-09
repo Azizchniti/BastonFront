@@ -179,7 +179,7 @@ const handleToggleHighlight = (id: string) => {
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Mural</h2>
         <p className="text-muted-foreground">
-          Gerencie comunicados, notícias e avisos para os membros
+          Comunicados, notícias e avisos
         </p>
       </div>
 

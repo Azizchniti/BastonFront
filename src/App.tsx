@@ -31,6 +31,7 @@ import MemberCommissions from "./pages/member/Commissions";
 import MemberLeads from "./pages/member/Leads";
 import NewLead from "./pages/member/NewLead";
 import MemberMural from "./pages/member/Mural";
+import RankingPage from "./pages/member/Ranking";
 import Signup from "./pages/Signup";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
 
@@ -193,7 +194,7 @@ const App = () => (
                 path="/member/ranking" 
                 element={
                   <AuthenticatedLayout requiredRole="member">
-                    <div>Página de Ranking (Membro)</div>
+                    <RankingPage/>
                   </AuthenticatedLayout>
                 } 
               />

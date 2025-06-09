@@ -329,7 +329,7 @@ useEffect(() => {
               {new Intl.NumberFormat('pt-BR', {
                 style: 'currency',
                 currency: 'BRL'
-              }).format(squadMetrics?.totalValue || 0)}
+              }).format(squadMetrics?.totalSales || 0)}
             </div>
           </CardContent>
         </Card>

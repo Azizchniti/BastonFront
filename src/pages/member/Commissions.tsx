@@ -168,12 +168,45 @@ const MemberCommissions = () => {
               {filteredCommissions.length > 0 ? (
                 <ul className="space-y-2">
                   {filteredCommissions.map((c) => (
-                    <li key={c.id} className="border rounded-md p-4">
-                      <p><strong>Lote:</strong> {getLeadNameById(c.lead_id)}</p>
-                      <p><strong>Valor:</strong> {formatCurrency(c.commission_value)}</p>
-                      <p><strong>Status:</strong> {c.is_paid ? "Paga" : "Pendente"}</p>
-                      <p><strong>Data:</strong> {new Date(c.payment_date).toLocaleDateString()}</p>
+                    <li
+                      key={c.id}
+                      className="rounded-xl border p-4 shadow-sm hover:shadow-md transition bg-white dark:bg-muted"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Lote</p>
+                          <p className="font-medium">{getLeadNameById(c.lead_id)}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground">Valor</p>
+                          <p className="font-semibold text-green-600 dark:text-green-400">
+                            {formatCurrency(c.commission_value)}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground">Status</p>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                              c.is_paid
+                                ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-100"
+                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-100"
+                            }`}
+                          >
+                            {c.is_paid ? "Paga" : "Pendente"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground">Data</p>
+                          <p className="font-medium">
+                            {new Date(c.payment_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
                     </li>
+
                   ))}
                 </ul>
               ) : (
@@ -181,39 +214,80 @@ const MemberCommissions = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="pending">
-              {pendingCommissions.length > 0 ? (
-                <ul className="space-y-2">
-                  {pendingCommissions.map((c) => (
-                    <li key={c.id} className="border rounded-md p-4">
-                      <p><strong>Lote:</strong> {getLeadNameById(c.lead_id)}</p>
-                      <p><strong>Valor:</strong> {formatCurrency(c.commission_value)}</p>
-                      <p><strong>Status:</strong> Pendente</p>
-                      <p><strong>Data:</strong> {new Date(c.payment_date).toLocaleDateString()}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground mt-4">Nenhuma comissão pendente.</p>
-              )}
-            </TabsContent>
+           <TabsContent value="pending">
+  {pendingCommissions.length > 0 ? (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      {pendingCommissions.map((c) => (
+        <div
+          key={c.id}
+          className="border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-muted"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-muted-foreground">Lote</div>
+            <div className="text-base font-medium">
+              {getLeadNameById(c.lead_id)}
+            </div>
 
-            <TabsContent value="paid">
-              {paidCommissions.length > 0 ? (
-                <ul className="space-y-2">
-                  {paidCommissions.map((c) => (
-                    <li key={c.id} className="border rounded-md p-4">
-                      <p><strong>Lote:</strong> {getLeadNameById(c.lead_id)}</p>
-                      <p><strong>Valor:</strong> {formatCurrency(c.commission_value)}</p>
-                      <p><strong>Status:</strong> Paga</p>
-                      <p><strong>Data:</strong> {new Date(c.payment_date).toLocaleDateString()}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground mt-4">Nenhuma comissão paga.</p>
-              )}
-            </TabsContent>
+            <div className="text-sm text-muted-foreground">Valor</div>
+            <div className="text-base font-semibold text-green-600">
+              {formatCurrency(c.commission_value)}
+            </div>
+
+            <div className="text-sm text-muted-foreground">Status</div>
+            <div className="inline-block w-fit rounded-full px-3 py-1 text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              Pendente
+            </div>
+
+            <div className="text-sm text-muted-foreground">Data</div>
+            <div className="text-base">
+              {new Date(c.payment_date).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-muted-foreground mt-4">Nenhuma comissão pendente.</p>
+  )}
+</TabsContent>
+
+<TabsContent value="paid">
+  {paidCommissions.length > 0 ? (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      {paidCommissions.map((c) => (
+        <div
+          key={c.id}
+          className="border rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-white dark:bg-muted"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-muted-foreground">Lote</div>
+            <div className="text-base font-medium">
+              {getLeadNameById(c.lead_id)}
+            </div>
+
+            <div className="text-sm text-muted-foreground">Valor</div>
+            <div className="text-base font-semibold text-green-600">
+              {formatCurrency(c.commission_value)}
+            </div>
+
+            <div className="text-sm text-muted-foreground">Status</div>
+            <div className="inline-block w-fit rounded-full px-3 py-1 text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              Paga
+            </div>
+
+            <div className="text-sm text-muted-foreground">Data</div>
+            <div className="text-base">
+              {new Date(c.payment_date).toLocaleDateString()}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-muted-foreground mt-4">Nenhuma comissão paga.</p>
+  )}
+</TabsContent>
+
           </Tabs>
         </CardContent>
       </Card>
