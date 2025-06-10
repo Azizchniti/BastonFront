@@ -8,7 +8,11 @@ import { LeadProvider, useLeadContext } from "./LeadContext";
 import { CommissionProvider, useCommissionContext } from "./CommissionContext";
 import MemberService from "@/services/memberService_static";
 import MemberCommissionService from "@/services/memberCommissionService";
-
+type TopSquad = {
+  leader: Member;
+  associates: Member[];
+  totalCommission: number;
+};
 // Combined context type definition
 type DataContextType = {
   members: Member[];
@@ -26,6 +30,7 @@ type DataContextType = {
   getSquadMetrics: (memberId: string) => Squad;
   getMemberMonthlyCommissions: (memberId: string) => MonthlyCommission[];
   getTopMembers: () => Member[];
+  getTopSquads: () => TopSquad[];
   getLeadCountByStatus: () => Record<LeadStatus, number>;
   getTotalSalesValue: () => number;
   findMemberPath: (memberId: string) => Member[];

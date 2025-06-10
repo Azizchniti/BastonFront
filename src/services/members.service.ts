@@ -5,7 +5,11 @@ import { Squad } from '@/types';
 // Backend API base URL (adjust if needed)
 const API_URL = 'https://pfp-backend-0670.onrender.com/api/members';
 
-
+type TopSquad = {
+  leader: Member;
+  associates: Member[];
+  totalCommission: number;
+};
 export const MemberService = {
   // ✅ Get all members (basic info)
   async getAllMembers(): Promise<Member[]> {
@@ -45,6 +49,10 @@ export const MemberService = {
   // ✅ Get top members (e.g. top by sales or commissions)
   async getTopMembers(): Promise<Member[]> {
     const response = await axios.get(`${API_URL}/top`);
+    return response.data;
+  },
+    async getTopSquads(): Promise<TopSquad[]> {
+    const response = await axios.get(`${API_URL}/top-squads`);
     return response.data;
   },
 
