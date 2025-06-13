@@ -32,6 +32,8 @@ import MemberLeads from "./pages/member/Leads";
 import NewLead from "./pages/member/NewLead";
 import MemberMural from "./pages/member/Mural";
 import RankingPage from "./pages/member/Ranking";
+import ProfilePage from "./pages/member/Profile";
+
 import Signup from "./pages/Signup";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
 
@@ -140,7 +142,7 @@ const App = () => (
                 path="/member/profile" 
                 element={
                   <AuthenticatedLayout requiredRole="member" >
-                    <div>Página de Perfil (Membro)</div>
+                    <ProfilePage/>
                   </AuthenticatedLayout>
                 } 
               />

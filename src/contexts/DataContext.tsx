@@ -119,10 +119,6 @@ const getMemberSquad = (memberId: string): Promise<Member[]> => {
       return;
     }
 
-      const getSquadMetrics = (memberId: string) => {
-        return MemberService.getSquadMetrics(memberId); // ✅ correct
-      };
-
 
     // Determine the member's line (1 or 2)
     const memberLine = MemberService.getMemberLine(member.id);
