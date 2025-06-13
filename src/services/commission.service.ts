@@ -7,10 +7,11 @@ const API_URL = "https://pfp-backend-0670.onrender.com/api/commissions"; // Adju
 let commissions: Commission[] = [];
 
 export const CommissionService = {
-  async getAll(): Promise<Commission[]> {
-    const res = await axios.get(API_URL);
-    return res.data;
-  },
+async getAll(): Promise<Commission[]> {
+  const res = await axios.get(API_URL);
+  commissions = res.data; // <-- store in memory
+  return commissions;
+},
 
   async getById(id: string): Promise<Commission> {
     const res = await axios.get(`${API_URL}/${id}`);
@@ -82,19 +83,27 @@ updateMemberMonthlyCommissions: async (
     return new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
   },
 
-  getCommissionsForecast: (startDate?: Date, endDate?: Date) => {
-    const filtered = commissions.filter(c => {
-      const date = new Date(c.sale_date);
-      if (startDate && date < startDate) return false;
-      if (endDate && date > endDate) return false;
-      return !c.is_paid;
-    });
+getCommissionsForecast: (startDate?: Date, endDate?: Date) => {
+  console.log("All commissions:", commissions.length);
 
-    return {
-      nextPaymentDate: CommissionService.getNextPaymentDate(),
-      totalPendingAmount: filtered.reduce((sum, c) => sum + c.commission_value, 0),
-      //pendingBatches: new Set(filtered.map(c => c.batchId)).size,
-      membersWithPending: new Set(filtered.map(c => c.member_id)).size,
-    };
-  },
+  const filtered = commissions.filter(c => {
+    const saleDate = new Date(c.sale_date);
+    console.log('Filtering commission', c.id, 'saleDate:', saleDate);
+
+    if (startDate && saleDate < startDate) return false;
+    if (endDate && saleDate > endDate) return false;
+    return !c.is_paid;
+  });
+
+  console.log("Filtered commissions:", filtered.length);
+
+  return {
+    nextPaymentDate: CommissionService.getNextPaymentDate(),
+    totalPendingAmount: filtered.reduce((sum, c) => sum + c.commission_value, 0),
+    pendingBatches: 0, // since no batchId
+    membersWithPending: new Set(filtered.map(c => c.member_id)).size,
+  };
+},
+
+
 };

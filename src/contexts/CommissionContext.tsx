@@ -20,7 +20,7 @@ type CommissionContextType = {
   getCommissionsForecast: (startDate?: Date, endDate?: Date) => {
     nextPaymentDate: Date;
     totalPendingAmount: number;
-   // pendingBatches: number;
+    pendingBatches: number;
     membersWithPending: number;
   };
 };

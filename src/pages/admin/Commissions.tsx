@@ -20,6 +20,7 @@ import {
 import { Member } from "@/types";
 import { MemberService } from "@/services/members.service";
 import { toast } from "sonner";
+import { CommissionService } from "@/services/commission.service";
 
 const AdminCommissions = () => {
   const { commissions, getNextPaymentDate, getCommissionsForecast } = useData();
@@ -65,6 +66,16 @@ const AdminCommissions = () => {
     };
     loadMembers();
   }, []);
+  useEffect(() => {
+  const loadCommissions = async () => {
+    try {
+      await CommissionService.getAll(); // This populates the local commissions array
+    } catch (error) {
+      toast.error("Erro ao buscar comissões");
+    }
+  };
+  loadCommissions();
+}, []);
 
 
   // Agrupar comissões por membro e mês

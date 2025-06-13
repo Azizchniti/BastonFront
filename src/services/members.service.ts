@@ -43,6 +43,7 @@ export const MemberService = {
   // ✅ Get squad metrics (aggregate data about the member's squad)
   async getSquadMetrics(id: string): Promise<Squad> {
     const response = await axios.get(`${API_URL}/${id}/squad-metrics`);
+    console.log('Fetched squad metrics:', response);
     return response.data;
   },
 
@@ -55,5 +56,10 @@ export const MemberService = {
     const response = await axios.get(`${API_URL}/top-squads`);
     return response.data;
   },
+  getMemberLine(id: string): number {
+  // Example logic to determine member line
+  if (id.startsWith("1")) return 1;
+  return 2;
+}
 
 };

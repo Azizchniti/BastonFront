@@ -6,7 +6,7 @@ import { useAuth } from "./AuthContext";
 import { MemberProvider, useMemberContext } from "./MemberContext";
 import { LeadProvider, useLeadContext } from "./LeadContext";
 import { CommissionProvider, useCommissionContext } from "./CommissionContext";
-import MemberService from "@/services/memberService_static";
+import { MemberService } from "@/services/members.service";
 import MemberCommissionService from "@/services/memberCommissionService";
 type TopSquad = {
   leader: Member;
@@ -18,7 +18,7 @@ type DataContextType = {
   members: Member[];
   leads: Lead[];
   commissions: Commission[];
-  addMember: (member: Omit<Member, "id" | "createdAt" | "grade" | "totalSales" | "totalContacts" | "totalCommission">) => void;
+  //addMember: (member: Omit<Member, "id" | "createdAt" | "grade" | "totalSales" | "totalContacts" | "totalCommission">) => void;
   updateMember: (id: string, data: Partial<Member>) => void;
   deleteMember: (id: string) => void;
   addLead: (lead: Omit<Lead, "id" | "created_at" | "updated_at">) => Promise<boolean>;
@@ -26,8 +26,8 @@ type DataContextType = {
   deleteLead: (id: string) => void;
   closeLead: (id: string, sale_value: number) => void;
   getMemberCommissions: (memberId: string) => Commission[];
-  getMemberSquad: (memberId: string) => Member[];
-  getSquadMetrics: (memberId: string) => Squad;
+  getMemberSquad: (memberId: string) => Promise<Member[]>;
+  getSquadMetrics: (memberId: string) => Promise<import("@/types").Squad>; 
   getMemberMonthlyCommissions: (memberId: string) => MonthlyCommission[];
   getTopMembers: () => Member[];
   getTopSquads: () => TopSquad[];
@@ -94,7 +94,10 @@ const DataContextBridge = ({ children }: { children: React.ReactNode }) => {
   const commissionContext = useCommissionContext();
 
   // Create commissionService for member calculations
-  const memberService = new MemberService(memberContext.members, commissionContext.commissions);
+
+const getMemberSquad = (memberId: string): Promise<Member[]> => {
+  return MemberService.getMemberSquad(memberId);
+};
 
   // Implement closeLead which needs to coordinate between contexts
   const closeLead = (id: string, sale_value: number) => {
@@ -116,8 +119,13 @@ const DataContextBridge = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+      const getSquadMetrics = (memberId: string) => {
+        return MemberService.getSquadMetrics(memberId); // ✅ correct
+      };
+
+
     // Determine the member's line (1 or 2)
-    const memberLine = memberService.getMemberLine(member.id);
+    const memberLine = MemberService.getMemberLine(member.id);
     
     // Process the sale for the member
     const { memberCommission, uplineCommission } = commissionContext.calculateCommission(
@@ -176,6 +184,21 @@ const DataContextBridge = ({ children }: { children: React.ReactNode }) => {
     
     toast.success("Lead fechado e comissões calculadas com sucesso");
   };
+  type SquadSummary = Pick<Squad, 'totalSales' | 'totalContacts' | 'totalCommission'>;
+
+  const getSquadMetrics = async (memberId: string): Promise<Squad> => {
+  try {
+    const metrics = await MemberService.getSquadMetrics(memberId); // this must hit your backend
+    return metrics;
+  } catch (error) {
+    console.error("Failed to fetch squad metrics:", error);
+    return {
+      totalSales: 0,
+      totalContacts: 0,
+      totalCommission: 0,
+    }; // or whatever your Squad type requires as defaults
+  }
+};
 
   // The combined DataContext value
   const dataContextValue: DataContextType = {
@@ -189,6 +212,9 @@ const DataContextBridge = ({ children }: { children: React.ReactNode }) => {
     updateMemberMonthlyCommissions: commissionContext.updateMemberMonthlyCommissions,
     getNextPaymentDate: commissionContext.getNextPaymentDate,
     getCommissionsForecast: commissionContext.getCommissionsForecast,
+    getMemberSquad, 
+    getSquadMetrics,
+    
   };
   
   return (

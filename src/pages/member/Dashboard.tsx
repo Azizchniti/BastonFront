@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, CheckSquare, XSquare, DollarSign, Users, Trophy, TrendingUp, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import { Member, MemberGrade } from "@/types";
+import { Member, MemberGrade, Squad } from "@/types";
 import { MemberService } from "@/services/members.service";
 
 // Define grade colors mapping
 const gradeColors = {
-  start: "bg-slate-500",
+  beginner: "bg-slate-500",
   standard: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
@@ -30,10 +30,12 @@ const MemberDashboard: React.FC = () => {
     getMemberMonthlyCommissions,
     getSquadMetrics 
   } = useData();
+    const [squad, setSquad] = useState<Member[]>([]);
   console.log(leads)
   console.log(user)
   const [activeTab, setActiveTab] = useState("personal");
-  
+    const [squadMetrics, setSquadMetrics] = useState<Squad | null>(null);
+
   // O usuário atual está garantido como sendo um Member pelo layout autenticado
   const [currentMember, setCurrentMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,22 +44,49 @@ const MemberDashboard: React.FC = () => {
   return lead ? lead.name : "Lead não encontrado";
 };
 
-  useEffect(() => {
-    const fetchMember = async () => {
-      if (user?.id) {
-        try {
-          const memberData = await MemberService.getMemberById(user.id);
-          setCurrentMember(memberData);
-        } catch (err) {
-          console.error("Failed to fetch member:", err);
-        } finally {
-          setLoading(false);
-        }
+useEffect(() => {
+  const fetchMember = async () => {
+    if (user?.id) {
+      try {
+        const memberData = await MemberService.getMemberById(user.id);
+        setCurrentMember(memberData);
+      } catch (err) {
+        console.error("Failed to fetch member:", err);
+      } finally {
+        setLoading(false);
       }
-    };
+    }
+  };
 
-    fetchMember();
-  }, [user?.id]);
+  fetchMember();
+}, [user?.id]);
+
+useEffect(() => {
+  const fetchMetrics = async () => {
+    if (currentMember?.id) {
+      const data = await getSquadMetrics(currentMember.id);
+      console.log("Fetched squad metrics:", data);
+      setSquadMetrics(data);
+    }
+  };
+
+  fetchMetrics();
+}, [currentMember?.id]);
+
+useEffect(() => {
+  const fetchSquad = async () => {
+    if (currentMember?.id) {
+      try {
+        const squadData = await getMemberSquad(currentMember.id);
+        setSquad(squadData);
+      } catch (error) {
+        console.error("Erro ao buscar o squad:", error);
+      }
+    }
+  };
+
+  fetchSquad();
+}, [currentMember?.id]);
   
   if (loading || !currentMember) {
   return <div>Loading member data...</div>;
@@ -66,9 +95,12 @@ const MemberDashboard: React.FC = () => {
   // Dados do membro
   const memberLeads = leads.filter(lead => lead.member_id === currentMember.id);
   const memberCommissions = getMemberCommissions(currentMember.id);
-  const squad = getMemberSquad(currentMember.id);
+
+
   const monthlyCommissions = getMemberMonthlyCommissions(currentMember.id);
-  const squadMetrics = getSquadMetrics(currentMember.id);
+  //const squadMetrics = getSquadMetrics(currentMember.id);
+
+
   
   // Contagem de leads por status
   const leadCounts = memberLeads.reduce(
@@ -145,7 +177,7 @@ const personalMetrics = [
 const squadMetricsCards = [
   {
     title: "Membros no Squad",
-    value: squad?.length ?? 0,
+    value: squadMetrics?.memberCount ?? 0,
     description: "Membros sob sua liderança",
     icon: Users,
     color: "text-blue-500",
@@ -173,8 +205,8 @@ const squadMetricsCards = [
   {
     title: "Comissões do Squad",
     value:
-      typeof squadMetrics?.totalSales === "number"
-        ? `R$ ${squadMetrics.totalSales.toFixed(2)}`
+      typeof squadMetrics?.totalCommission === "number"
+        ? `R$ ${squadMetrics.totalCommission.toFixed(2)}`
         : "R$ 0.00",
     description: "Total acumulado pelo squad",
     icon: DollarSign,
@@ -183,6 +215,7 @@ const squadMetricsCards = [
   },
 ];
 
+
 // Formatação do valor para o tooltip do gráfico de comissões
 const formatCurrency = (value: number) => {
   return typeof value === "number" ? `R$ ${value.toFixed(2)}` : "R$ 0.00";
@@ -190,6 +223,8 @@ const formatCurrency = (value: number) => {
 
   // Progresso para o próximo nível
   const levelProgress = getNextLevelProgress(currentMember.grade, currentMember.total_sales);
+
+  
 
   return (
     <div className="space-y-6">
@@ -221,12 +256,10 @@ const formatCurrency = (value: number) => {
                       : levelProgress.text}
                   </span>
                 </div>
-                <Progress 
-                  value={levelProgress.percentage} 
-                  className="h-2.5" 
-                />
+              <Progress value={levelProgress.percentage} className="h-2.5" />
+
                 <div className="grid grid-cols-5 text-xs text-muted-foreground">
-                  <div className="text-center">Start</div>
+                  <div className="text-center">Beginner</div>
                   <div className="text-center">Standard</div>
                   <div className="text-center">Gold</div>
                   <div className="text-center">Platinum</div>
@@ -528,49 +561,45 @@ const formatCurrency = (value: number) => {
 };
 
 // Função auxiliar para calcular o progresso para o próximo nível
+// Map totalSales into 0–100% spread over 5 levels
 function getNextLevelProgress(
   currentGrade: string | undefined,
   totalSales: number
 ): { percentage: number; text: string } {
-  const levels = {
-    start: { min: 0, max: 100000, next: "Standard" },
-    standard: { min: 100000, max: 500000, next: "Gold" },
-    gold: { min: 500000, max: 1000000, next: "Platinum" },
-    platinum: { min: 1000000, max: 10000000, next: "Diamond" },
-    diamond: { min: 10000000, max: Infinity, next: null },
-  };
+  const levels = [
+    { key: "beginner", min: 0, max: 100000 },
+    { key: "standard", min: 100000, max: 500000 },
+    { key: "gold", min: 500000, max: 1000000 },
+    { key: "platinum", min: 1000000, max: 10000000 },
+    { key: "diamond", min: 10000000, max: Infinity },
+  ];
 
-  if (!currentGrade || typeof currentGrade !== "string") {
-    return {
-      percentage: 0,
-      text: "Grau não informado ou inválido",
-    };
+  if (!currentGrade) {
+    return { percentage: 0, text: "Desconhecido" };
   }
 
-  const grade = currentGrade.toLowerCase() as keyof typeof levels;
-  const level = levels[grade];
-
-  if (!level) {
-    return {
-      percentage: 0,
-      text: "Grau desconhecido — verifique o cadastro",
-    };
+  const index = levels.findIndex((level) => level.key === currentGrade);
+  if (index === -1) {
+    return { percentage: 0, text: "Desconhecido" };
   }
 
-  if (grade === "diamond") {
-    return { percentage: 100, text: "Nível máximo atingido" };
+  const currentLevel = levels[index];
+  const nextLevel = levels[index + 1];
+
+  if (!nextLevel || totalSales >= currentLevel.max) {
+    return { percentage: 100, text: "Nível máximo" };
   }
 
-  const currentRange = level.max - level.min;
-  const currentProgress = totalSales - level.min;
-  const percentage = Math.min(100, Math.round((currentProgress / currentRange) * 100));
-  const remaining = level.max - totalSales;
+  const levelProgress = (totalSales - currentLevel.min) / (currentLevel.max - currentLevel.min);
+  const percentage = Math.round((index * 20) + (levelProgress * 20));
 
-  return {
-    percentage,
-    text: `R$ ${(remaining / 1000).toFixed(1)}K para ${level.next}`,
-  };
+  const remaining = currentLevel.max - totalSales;
+  const text = `R$ ${(remaining / 1000).toFixed(1)}K para ${nextLevel.key.charAt(0).toUpperCase() + nextLevel.key.slice(1)}`;
+
+  return { percentage, text };
 }
+
+
 
 
 export default MemberDashboard;

@@ -58,9 +58,7 @@ export interface Lead {
 }
 
 export interface Squad {
-  memberId: string;
-  memberName: string;
-  memberCount: number;
+  memberCount?: number;
   totalContacts: number;
   totalSales: number;
   totalCommission: number;
