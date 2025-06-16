@@ -56,11 +56,14 @@ const login = async (email: string, password: string): Promise<boolean> => {
     const result = await signIn(email, password);
 
     if (result?.user) {
+      // Save token to localStorage
+      localStorage.setItem("token", result.token);
+
       // Instead of setting user from result.user, fetch the full current user
-      const currentUser = await fetchCurrentUser(); // This returns the full user with `role`
+      const currentUser = await fetchCurrentUser();
       setUser(currentUser);
       localStorage.setItem("user", JSON.stringify(currentUser));
-      toast.success(`Bem-vindo, ${currentUser.name || currentUser.name || "usuário"}!`);
+      toast.success(`Bem-vindo, ${currentUser.name || "usuário"}!`);
       return true;
     } else {
       toast.error("Falha no login. Verifique suas credenciais.");
@@ -74,6 +77,7 @@ const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(false);
   }
 };
+
 
 
   const logout = () => {

@@ -13,10 +13,12 @@ import {
 } from "@/components/ui/card";
 import { getCurrentUser, signIn } from "@/services/auth-service";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -42,33 +44,27 @@ const handleSubmit = async (event: React.FormEvent) => {
 
   setIsLoading(true);
   try {
-    const signInResult = await signIn(email, password);
+  const success = await login(email, password);
 
-    if (signInResult && signInResult.token) {
-      toast.success("Login realizado com sucesso!");
-      setSuccessMessage("Login realizado com sucesso!");
-      localStorage.setItem("token", signInResult.token);
-      localStorage.setItem("user", JSON.stringify(signInResult.user));
-
-      const userData = await getCurrentUser(signInResult.token); // pass token directly
-      console.log("userData:", userData);
-
-      if (userData?.role) {
-        navigate(redirectUserByRole(userData.role));
+      if (success) {
+        // user is now set in context, get it
+        // you can get user from context or localStorage
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        if (user?.role) {
+          navigate(redirectUserByRole(user.role));
+        } else {
+          throw new Error("User role not found");
+        }
       } else {
-        throw new Error("User role not found");
+        toast.error("Falha ao entrar. Verifique suas credenciais.");
       }
-    } else {
-      setErrorMessage("Falha ao entrar. Verifique suas credenciais.");
-      toast.error("Falha ao entrar. Verifique suas credenciais.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro inesperado. Tente novamente.");
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error(error);
-    setErrorMessage("Erro inesperado. Tente novamente.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
   return (
