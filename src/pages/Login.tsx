@@ -33,37 +33,43 @@ const Login: React.FC = () => {
     }
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setErrorMessage(null);
-    setSuccessMessage(null);
+const handleSubmit = async (event: React.FormEvent) => {
+  event.preventDefault();
+  setErrorMessage(null);
+  setSuccessMessage(null);
 
-    if (!email || !password) return;
+  if (!email || !password) return;
 
-    setIsLoading(true);
-    try {
-      const signInResult = await signIn(email, password);
+  setIsLoading(true);
+  try {
+    const signInResult = await signIn(email, password);
 
-      if (signInResult && signInResult.token) {
-        toast.success("Login realizado com sucesso!");
-        setSuccessMessage("Login realizado com sucesso!");
-        localStorage.setItem("token", signInResult.token);
-        localStorage.setItem("user", JSON.stringify(signInResult.user));
+    if (signInResult && signInResult.token) {
+      toast.success("Login realizado com sucesso!");
+      setSuccessMessage("Login realizado com sucesso!");
+      localStorage.setItem("token", signInResult.token);
+      localStorage.setItem("user", JSON.stringify(signInResult.user));
 
-        const userData = await getCurrentUser();
-        console.log("userData:", userData);
-        navigate(redirectUserByRole(userData.role)); // ✅ Redirect based on role
+      const userData = await getCurrentUser(signInResult.token); // pass token directly
+      console.log("userData:", userData);
+
+      if (userData?.role) {
+        navigate(redirectUserByRole(userData.role));
       } else {
-        setErrorMessage("Falha ao entrar. Verifique suas credenciais.");
-        toast.error("Falha ao entrar. Verifique suas credenciais.");
+        throw new Error("User role not found");
       }
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("Erro inesperado. Tente novamente.");
-    } finally {
-      setIsLoading(false);
+    } else {
+      setErrorMessage("Falha ao entrar. Verifique suas credenciais.");
+      toast.error("Falha ao entrar. Verifique suas credenciais.");
     }
-  };
+  } catch (error) {
+    console.error(error);
+    setErrorMessage("Erro inesperado. Tente novamente.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-background">

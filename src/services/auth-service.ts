@@ -1,3 +1,4 @@
+import { User } from '@/types';
 import axios from 'axios';
 
 //const API_URL = 'http://localhost:5000/api/auth';
@@ -30,38 +31,47 @@ export const signUp = async (
 };
 
 export const signIn = async (email: string, password: string) => {
-  const response = await axios.post(`${API_URL}/signin`, { email, password });
-
-  const { token, user } = response.data;
-
-  if (token) {
-    localStorage.setItem('access_token', token);
-  }
-  if (user) {
-    localStorage.setItem('user', JSON.stringify(user));
-  }
-  console.log("token is:", token);
-  console.log("user is:", user);
-  return { token, user };
-};
-
-
-
-export const getCurrentUser = async () => {
   try {
-    const token = localStorage.getItem('access_token'); // ✅ correct key
-    const response = await axios.get(`${API_URL}/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-    });
+    const response = await axios.post(`${API_URL}/signin`, { email, password });
+    const { token, user } = response.data;
 
-    return response.data;
+    console.log("token is:", token);
+    console.log("user is:", user);
+
+    return { token, user };
   } catch (error) {
-    console.error('Get current user error:', error);
+    console.error('Sign in error:', error);
     return null;
   }
 };
+
+
+
+
+export async function getCurrentUser(token?: string): Promise<User | null> {
+  const finalToken = token || localStorage.getItem("token");
+  console.log("Using token in getCurrentUser:", finalToken);
+
+  if (!finalToken) return null;
+
+  try {
+    const response = await axios.get(`${API_URL}/me`, {
+      headers: {
+        Authorization: `Bearer ${finalToken}`,
+      },
+    });
+
+    console.log("Get current user response:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("Get current user error:", error?.response?.data || error.message);
+    return null;
+  }
+}
+;
+
+
+
 
 export const logout = async () => {
   try {

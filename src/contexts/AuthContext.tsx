@@ -16,25 +16,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-const fetchAndSetCurrentUser = async () => {
-  const response = await getCurrentUser(); // Your API call
-  setUser(response); // This should include role: 'admin' or 'member'
-};
+
 
   // Load current user on mount
 useEffect(() => {
   const initializeAuth = async () => {
-    const currentUser = await fetchCurrentUser(); // 🔁 always fetch from backend
-    if (currentUser) {
-      setUser(currentUser);
-      localStorage.setItem("user", JSON.stringify(currentUser)); // optional
-    } else {
-      localStorage.removeItem("user");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.log("No token found, skipping getCurrentUser");
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    try {
+      const currentUser = await fetchCurrentUser(token); // pass the token explicitly
+      if (currentUser) {
+        setUser(currentUser);
+        localStorage.setItem("user", JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem("user");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar usuário atual:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   initializeAuth();
 }, []);
+
 
 
 const login = async (email: string, password: string): Promise<boolean> => {
@@ -47,7 +60,7 @@ const login = async (email: string, password: string): Promise<boolean> => {
       const currentUser = await fetchCurrentUser(); // This returns the full user with `role`
       setUser(currentUser);
       localStorage.setItem("user", JSON.stringify(currentUser));
-      toast.success(`Bem-vindo, ${currentUser.firstName || currentUser.name || "usuário"}!`);
+      toast.success(`Bem-vindo, ${currentUser.name || currentUser.name || "usuário"}!`);
       return true;
     } else {
       toast.error("Falha no login. Verifique suas credenciais.");
