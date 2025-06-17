@@ -166,19 +166,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
               </Button>
 
-          
-          {!isCollapsed && (
-            <Link to="/" className="flex items-center gap-2">
-    
-                  <img
-        src="/ICONE_-_AZUL.webp"
-        alt="Foco Hub Icon"
-        className="w-10 h-10 object-contain"
-      />
-                
-             
-            </Link>
-          )}
+    {!isCollapsed && (
+  <Link to="/" className="flex items-center gap-2 px-4">
+    <img
+      src="/V2_-_AZUL.webp"
+      alt="Foco Hub Icon"
+      className="w-20 h-auto object-contain ml-4"
+    />
+  </Link>
+)}
+
           
           {isCollapsed && (
             <div className="flex justify-center w-full">
