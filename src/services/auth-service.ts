@@ -10,7 +10,9 @@ export const signUp = async (
   role: string,
   firstName: string,
   lastName: string,
-  upline_id?: string
+  upline_id?: string,
+  cpf?: string,
+  phone?: string
 ) => {
   try {
     const response = await axios.post(`${API_URL}/signup`, {
@@ -19,9 +21,11 @@ export const signUp = async (
       role,
       firstName,
       lastName,
-       upline_id,
+      upline_id,
+      cpf,
+      phone,
     });
-    
+
     return response.data.user;
   } catch (error) {
     console.error('Signup error:', error);

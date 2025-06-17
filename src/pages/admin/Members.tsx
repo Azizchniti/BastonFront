@@ -51,6 +51,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Member } from "@/types/member.types";
 import { MemberGrade } from "@/types";
+import axios from "axios";
+import { signUp } from "@/services/auth-service";
 
 const gradeColors = {
   beginner: "bg-slate-500",
@@ -71,7 +73,7 @@ const gradeLabels = {
 const MembersPage = () => {
 const [members, setMembers] = useState<Member[]>([]);
  const [loading, setLoading] = useState<boolean>(true);
-  const { addMember, updateMember, deleteMember } = useData();
+  const {  updateMember, deleteMember } = useData();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -99,13 +101,16 @@ const [members, setMembers] = useState<Member[]>([]);
 
 
   // Formulário para novo membro
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    cpf: "",
-    phone: "",
-    grade: ""
-  });
+const [formData, setFormData] = useState({
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  cpf: "",
+  grade: "",  
+  phone: "",
+  role: "member", // Default
+});
 
   // Filtrar membros baseado na busca
   // const filteredMembers = members.filter(member => 
@@ -167,39 +172,51 @@ const [members, setMembers] = useState<Member[]>([]);
 
   const resetForm = () => {
     setFormData({
-      first_name: "",
-      last_name: "",
-      cpf: "",
-      phone: "",
-      grade: ""
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  cpf: "",
+  grade:"",
+  phone: "",
+  role: "member", // Default
     });
   };
 
   // Adicionar um novo membro
-  const handleAddMember = () => {
-    // Validate required fields
-    if (!formData.first_name || !formData.last_name || !formData.cpf || !formData.phone) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    
-    try {
-      addMember({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        cpf: formData.cpf,
-        phone: formData.phone,
-        total_sales: 0,
-        total_contacts: 0,
-        total_commission: 0,
-        upline_id: ""
-      });
-      setAddDialogOpen(false);
+const handleAddMember = async () => {
+  const { first_name, last_name, email, password, role, cpf, phone } = formData;
+
+  if (!first_name || !last_name || !email || !password) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
+
+  try {
+    const newUser = await signUp(
+      email,
+      password,
+      role,
+      first_name,
+      last_name,
+      null,
+      cpf,
+      phone
+    );
+
+    if (newUser) {
+      toast.success("Membro criado com sucesso. Verifique o email de ativação.");
       resetForm();
-    } catch (error) {
-      toast.error("Erro ao adicionar membro");
+      setAddDialogOpen(false);
+    } else {
+      toast.error("Erro ao criar membro. Verifique os dados e tente novamente.");
     }
-  };
+  } catch (error) {
+    toast.error("Erro inesperado ao criar membro.");
+    console.error(error);
+  }
+};
+
 
   // Editar um membro existente
   const handleEditMember = () => {
@@ -244,16 +261,20 @@ const [members, setMembers] = useState<Member[]>([]);
 
   // Preparar para editar um membro
   const handleEditDialogOpen = (member: Member) => {
-    setSelectedMember(member);
-    setFormData({
-      first_name: member.first_name ,
-      last_name: member.last_name,
-      grade: member.grade,
-      cpf: member.cpf,
-      phone: member.phone
-    });
-    setEditDialogOpen(true);
-  };
+  setSelectedMember(member);
+  setFormData({
+    first_name: member.first_name,
+    last_name: member.last_name,
+    email: "",        // default or fetch if available
+    password: "",     // keep empty for security
+    cpf: member.cpf,
+    phone: member.phone,
+    role: "member",   // or use member.role if available
+    grade: member.grade,
+  });
+  setEditDialogOpen(true);
+};
+
 
   // Preparar para excluir um membro
   const handleDeleteDialogOpen = (member: Member) => {
@@ -282,58 +303,87 @@ const [members, setMembers] = useState<Member[]>([]);
             </DialogHeader>
             
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nome
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cpf" className="text-right">
-                  CPF
-                </Label>
-                <Input
-                  id="cpf"
-                  name="cpf"
-                  value={formData.cpf}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Telefone
-                </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="first_name" className="text-right">Nome</Label>
+          <Input
+            id="first_name"
+            name="first_name"
+            value={formData.first_name}
+            onChange={handleInputChange}
+            className="col-span-3"
+          />
+        </div>
+
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="last_name" className="text-right">Sobrenome</Label>
+          <Input
+            id="last_name"
+            name="last_name"
+            value={formData.last_name}
+            onChange={handleInputChange}
+            className="col-span-3"
+          />
+        </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="cpf" className="text-right">CPF</Label>
+          <Input
+            id="cpf"
+            name="cpf"
+            value={formData.cpf}
+            onChange={handleInputChange}
+            className="col-span-3"
+          />
+        </div>
+
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="phone" className="text-right">Telefone</Label>
+          <Input
+            id="phone"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            className="col-span-3"
+          />
+        </div>
+
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="email" className="text-right">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            className="col-span-3"
+          />
+        </div>
+
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="password" className="text-right">Senha</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            className="col-span-3"
+          />
+        </div>
+
+
+        <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="role" className="text-right">Role</Label>
+        <select
+          id="role"
+          name="role"
+          value={formData.role}
+          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          className="col-span-3 rounded-md border p-2"
+        >
+          <option value="member">Membro</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
               
            
             </div>

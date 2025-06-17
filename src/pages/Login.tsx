@@ -151,7 +151,7 @@ const handleSubmit = async (event: React.FormEvent) => {
             </CardContent>
           </form>
 
-          <div className="text-sm text-center mt-4">
+          {/* <div className="text-sm text-center mt-4">
             <span className="text-muted-foreground">Não tem uma conta? </span>
             <button
               type="button"
@@ -160,7 +160,7 @@ const handleSubmit = async (event: React.FormEvent) => {
             >
               Crie uma
             </button>
-          </div>
+          </div> */}
 
           <CardFooter className="flex justify-center border-t text-xs text-muted-foreground p-4">
             FocoHub &copy; {new Date().getFullYear()}
