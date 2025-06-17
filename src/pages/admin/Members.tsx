@@ -185,6 +185,7 @@ const [formData, setFormData] = useState({
 
   // Adicionar um novo membro
 const handleAddMember = async () => {
+  
   const { first_name, last_name, email, password, role, cpf, phone } = formData;
 
   if (!first_name || !last_name || !email || !password) {

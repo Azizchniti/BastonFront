@@ -63,7 +63,7 @@ const login = async (email: string, password: string): Promise<boolean> => {
       const currentUser = await fetchCurrentUser();
       setUser(currentUser);
       localStorage.setItem("user", JSON.stringify(currentUser));
-      toast.success(`Bem-vindo, ${currentUser.name || "usuário"}!`);
+      toast.success(`Bem-vindo, ${currentUser.first_name+" " +currentUser.last_name}!`);
       return true;
     } else {
       toast.error("Falha no login. Verifique suas credenciais.");

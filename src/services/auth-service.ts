@@ -74,9 +74,6 @@ export async function getCurrentUser(token?: string): Promise<User | null> {
 }
 ;
 
-
-
-
 export const logout = async () => {
   try {
     await axios.post(`${API_URL}/logout`);
@@ -87,3 +84,30 @@ export const logout = async () => {
   }
 };
 
+export const inviteUser = async (
+  email: string,
+  role: string,
+  firstName: string,
+  lastName: string,
+  upline_id?: string,
+  cpf?: string,
+  phone?: string
+) => {
+  try {
+    const response = await axios.post(`${API_URL}/invite`, {
+      email,
+      role,
+      firstName,
+      lastName,
+      upline_id,
+      cpf,
+      phone,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Invite error:', error);
+    console.log('Error response data:', error.response?.data);
+    return null;
+  }
+};
