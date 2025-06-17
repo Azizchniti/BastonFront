@@ -169,16 +169,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           
           {!isCollapsed && (
             <Link to="/" className="flex items-center gap-2">
-              <div className="relative w-8 h-8 overflow-hidden rounded-lg bg-primary/10">
-                <div className="absolute inset-0 flex items-center justify-center text-primary font-bold">
+    
                   <img
         src="/ICONE_-_AZUL.webp"
         alt="Foco Hub Icon"
         className="w-10 h-10 object-contain"
       />
-                </div>
-              </div>
-              <span className="text-lg font-semibold tracking-tight">FocoHub</span>
+                
+             
             </Link>
           )}
           

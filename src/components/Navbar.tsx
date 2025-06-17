@@ -43,10 +43,7 @@ const Navbar: React.FC<{
   return <div className="sticky top-0 z-10 glass border-b border-border/40 backdrop-blur-md">
       <div className="container flex items-center justify-between h-16 mx-auto max-w-7xl px-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hidden md:flex">
-            {sidebarCollapsed ? <PanelRight className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
-          </Button>
-          
+         
           {onMenuToggle && <Button variant="ghost" size="icon" onClick={onMenuToggle} className="md:hidden">
               <Menu className="w-5 h-5" />
             </Button>}
@@ -61,7 +58,7 @@ const Navbar: React.FC<{
                 />
               
          
-            <span className="text-lg font-semibold tracking-tight">Foco Hub</span>
+            {/* <span className="text-lg font-semibold tracking-tight">Foco Hub</span> */}
           </Link>
         </div>
 
