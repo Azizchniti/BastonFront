@@ -52,23 +52,28 @@ const Navbar: React.FC<{
             </Button>}
           
           <Link to="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8 overflow-hidden rounded-lg bg-primary/10">
-              <div className="absolute inset-0 flex items-center justify-center text-primary font-bold">
-                ES
-              </div>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">EmpowerSquad</span>
+          
+              
+                            <img
+                  src="/ICONE_-_AZUL.webp"
+                  alt="Foco Hub Icon"
+                  className="w-10 h-10 object-contain"
+                />
+              
+         
+            <span className="text-lg font-semibold tracking-tight">Foco Hub</span>
           </Link>
         </div>
 
         <div className="flex items-center gap-4 bg-transparent">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative w-9 h-9 rounded-full">
-                <div className="flex items-center justify-center w-full h-full text-sm font-medium bg-primary/10 rounded-full text-primary">
-                  {user?.name?.charAt(0) || "U"}
-                </div>
-              </Button>
+            <Button variant="ghost" className="w-10 h-10 p-0 rounded-full">
+            <div className="w-full h-full flex items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+              {user?.first_name?.charAt(0).toUpperCase() || "U"}
+            </div>
+          </Button>
+
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="flex flex-col">

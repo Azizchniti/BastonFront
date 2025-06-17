@@ -20,7 +20,8 @@ import {
   PanelRight,
   FileText,
   GraduationCap,
-  Megaphone
+  Megaphone,
+  ChevronLeft
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -156,33 +157,34 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       <div className="flex items-center justify-between h-16 p-4 border-b border-border/30">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleCollapse} 
-            className="mr-2"
-          >
-            {isCollapsed ? <PanelRight className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
-          </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleCollapse} 
+                className="mr-2"
+              >
+                {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+              </Button>
+
           
           {!isCollapsed && (
             <Link to="/" className="flex items-center gap-2">
               <div className="relative w-8 h-8 overflow-hidden rounded-lg bg-primary/10">
                 <div className="absolute inset-0 flex items-center justify-center text-primary font-bold">
-                  ES
+                  <img
+        src="/ICONE_-_AZUL.webp"
+        alt="Foco Hub Icon"
+        className="w-10 h-10 object-contain"
+      />
                 </div>
               </div>
-              <span className="text-lg font-semibold tracking-tight">EmpowerSquad</span>
+              <span className="text-lg font-semibold tracking-tight">FocoHub</span>
             </Link>
           )}
           
           {isCollapsed && (
             <div className="flex justify-center w-full">
-              <div className="relative w-8 h-8 overflow-hidden rounded-lg bg-primary/10">
-                <div className="absolute inset-0 flex items-center justify-center text-primary font-bold">
-                  ES
-                </div>
-              </div>
+             
             </div>
           )}
         </div>
@@ -241,7 +243,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-4 border-t border-border/30">
           <div className="flex items-center gap-3 py-2">
             <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold">
-              {user?.name?.charAt(0) || "U"}
+              {user?.first_name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="flex flex-col overflow-hidden">
               <span className="text-sm font-medium truncate">{user?.name}</span>
@@ -254,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {isCollapsed && (
         <div className="p-4 border-t border-border/30 flex justify-center">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold">
-            {user?.name?.charAt(0) || "U"}
+            {user?.first_name?.charAt(0).toUpperCase() || "U"}
           </div>
         </div>
       )}

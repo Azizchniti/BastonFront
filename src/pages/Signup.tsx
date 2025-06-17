@@ -58,10 +58,14 @@ const Signup: React.FC = () => {
 
       <div className="w-full max-w-md mx-auto animate-scale-in">
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="flex items-center justify-center w-16 h-16 mb-4 bg-primary/10 rounded-2xl">
-            <div className="text-2xl font-bold text-primary">ES</div>
+          <div className="mb-4">
+            <img
+              src="/V2_-_AZUL.webp"
+              alt="Foco Hub Logo"
+              className="w-40 h-auto mx-auto"
+            />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">EmpowerSquad</h1>
+        
           <p className="mt-1 text-sm text-muted-foreground">
             Plataforma de gestão de comunidades de vendas
           </p>
@@ -156,7 +160,7 @@ const Signup: React.FC = () => {
             </CardContent>
           </form>
           <CardFooter className="flex justify-center border-t text-xs text-muted-foreground p-4">
-            EmpowerSquad &copy; {new Date().getFullYear()}
+            FocoHub &copy; {new Date().getFullYear()}
           </CardFooter>
         </Card>
       </div>
