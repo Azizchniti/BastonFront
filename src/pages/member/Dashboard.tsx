@@ -152,10 +152,14 @@ const personalMetrics = [
   },
   {
     title: "Volume de Vendas",
-    value:
-      typeof totalSalesValue === "number"
-        ? `R$ ${(totalSalesValue / 1000).toFixed(1)}K`
-        : "R$ 0K",
+   value:
+  typeof totalSalesValue === "number"
+    ? new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(totalSalesValue)
+    : "R$ 0,00",
+
     description: "Valor total de vendas realizadas",
     icon: DollarSign,
     color: "text-emerald-500",
@@ -164,9 +168,13 @@ const personalMetrics = [
   {
     title: "Total em Comissões",
     value:
-      typeof currentMember?.total_commission === "number"
-        ? `R$ ${currentMember.total_commission.toFixed(2)}`
-        : "R$ 0.00",
+     typeof currentMember?.total_commission === "number"
+    ? new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(currentMember.total_commission)
+    : "R$ 0,00",
+
     description: "Valor acumulado em comissões",
     icon: TrendingUp,
     color: "text-amber-500",

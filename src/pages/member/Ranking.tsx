@@ -47,7 +47,7 @@ useEffect(() => {
         </h1>
 
         <div className="space-y-6">
-          {ranking.map((member, index) => (
+          {ranking.slice(0, 5).map((member, index) => (
             <motion.div
               key={member.id}
               initial={{ opacity: 0, y: 20 }}
@@ -89,7 +89,7 @@ useEffect(() => {
         </h2>
 
         <div className="space-y-8">
-          {topSquads.map((squad, index) => (
+          {topSquads.slice(0, 3).map((squad, index) => (
             <motion.div
               key={squad.leader.id}
               initial={{ opacity: 0, y: 20 }}

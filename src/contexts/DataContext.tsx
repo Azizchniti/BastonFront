@@ -42,7 +42,7 @@ type DataContextType = {
   getMemberClosedLeads: (memberId: string) => Lead[];
   getMemberLostLeads: (memberId: string) => Lead[];
   addNotes: (id: string, notes: string) => Promise<boolean>;
-  changeStatus: (id: string, status: LeadStatus) => Promise<boolean>;
+  changeStatus: (id: string, status: LeadStatus, saleValue: number | null) => Promise<boolean>;
   findLead: (id: string) => Lead | undefined;
   updateCommissionPaymentStatus: (id: string, isPaid: boolean, paymentDate: Date | null) => boolean;
   updateMemberMonthlyCommissions: (memberId: string, isPaid: boolean) => Promise<boolean>;
@@ -195,6 +195,22 @@ const getMemberSquad = (memberId: string): Promise<Member[]> => {
     }; // or whatever your Squad type requires as defaults
   }
 };
+const changeStatus = async (id: string, status: LeadStatus, saleValue: number | null): Promise<boolean> => {
+  const lead = leadContext.findLead(id);
+  if (!lead) {
+    toast.error("Lead não encontrado");
+    return false;
+  }
+
+  // Update the lead with new status and sale value
+  leadContext.updateLead(id, { status, sale_value: saleValue ?? 0 });
+
+  // Optionally, show a toast
+  toast.success("Status do lead atualizado");
+
+  return true;
+};
+
 
   // The combined DataContext value
   const dataContextValue: DataContextType = {
@@ -210,6 +226,7 @@ const getMemberSquad = (memberId: string): Promise<Member[]> => {
     getCommissionsForecast: commissionContext.getCommissionsForecast,
     getMemberSquad, 
     getSquadMetrics,
+    changeStatus,
     
   };
   

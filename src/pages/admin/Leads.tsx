@@ -48,7 +48,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Search, Plus, FileEdit } from "lucide-react";
+import { Search, Plus, FileEdit, Trash, NotebookText, ChartPie } from "lucide-react";
 import { MemberService } from "@/services/members.service";
 import DeleteLeadDialog from "@/components/DeleteLeadDialog";
 
@@ -75,7 +75,19 @@ const notesFormSchema = z.object({
 
 const statusFormSchema = z.object({
   status: z.enum(["new", "contacted", "in-progress", "negotiating", "closed", "lost"]),
+ saleValue: z
+  .string()
+  .transform((val) => {
+    // Remove BRL formatting and convert to number
+    const cleaned = val.replace(/[^\d,]/g, "").replace(",", ".");
+    return parseFloat(cleaned || "0");
+  })
+  .refine((val) => !isNaN(val), {
+    message: "Valor inválido",
+  }),
+
 });
+
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
 type NotesFormValues = z.infer<typeof notesFormSchema>;
@@ -84,7 +96,7 @@ type StatusFormValues = z.infer<typeof statusFormSchema>;
 const AdminLeads: React.FC = () => {
   const { leads, addLead, 
     deleteLead,
-   // addNotes, 
+    addNotes, 
     changeStatus } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -127,6 +139,7 @@ const [loading, setLoading] = useState<boolean>(true);
     resolver: zodResolver(statusFormSchema),
     defaultValues: {
       status: "new",
+      saleValue:0
     },
   });
 
@@ -152,31 +165,32 @@ const [loading, setLoading] = useState<boolean>(true);
     }
   };
 
-  //const handleAddNotes = (values: NotesFormValues) => {
-   // if (!selectedLead) return;
+  const handleAddNotes = (values: NotesFormValues) => {
+    if (!selectedLead) return;
 
-  //   const success = addNotes(selectedLead.id, values.notes);
-  //   if (success) {
-  //     setIsNotesDialogOpen(false);
-  //     notesForm.reset();
-  //     setSelectedLead(null);
-  //   }
-  // };
+     const success = addNotes(selectedLead.id, values.notes);
+     if (success) {
+       setIsNotesDialogOpen(false);
+       notesForm.reset();
+       setSelectedLead(null);
+     }
+   };
 const handleDelete = async (id: string) => {
   await deleteLead(id);
 };
 
 
-  const handleChangeStatus = (values: StatusFormValues) => {
-    if (!selectedLead) return;
+const handleChangeStatus = (values: StatusFormValues) => {
+  if (!selectedLead) return;
 
-    const success = changeStatus(selectedLead.id, values.status);
-    if (success) {
-      setIsStatusDialogOpen(false);
-      statusForm.reset();
-      setSelectedLead(null);
-    }
-  };
+  const success = changeStatus(selectedLead.id, values.status, Number(values.saleValue));
+  if (success) {
+    setIsStatusDialogOpen(false);
+    statusForm.reset();
+    setSelectedLead(null);
+  }
+};
+
 
   const openNotesDialog = (lead: Lead) => {
     setSelectedLead(lead);
@@ -184,11 +198,13 @@ const handleDelete = async (id: string) => {
     setIsNotesDialogOpen(true);
   };
 
-  const openStatusDialog = (lead: Lead) => {
-    setSelectedLead(lead);
-    statusForm.setValue("status", lead.status);
-    setIsStatusDialogOpen(true);
-  };
+const openStatusDialog = (lead: Lead) => {
+  setSelectedLead(lead);
+  statusForm.setValue("status", lead.status);
+  statusForm.setValue("saleValue" as any, String(lead.sale_value ?? ""));
+  setIsStatusDialogOpen(true);
+};
+
 
 const filteredLeads = leads.filter((lead) => {
   const member = members.find((m) => m.id === lead.member_id);
@@ -287,21 +303,22 @@ const filteredLeads = leads.filter((lead) => {
                             size="sm"
                             onClick={() => openNotesDialog(lead)}
                           >
-                            Observações
+                            <NotebookText />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => openStatusDialog(lead)}
                           >
-                            Status
+                            <ChartPie />
                           </Button>
                         <DeleteLeadDialog
                             onConfirm={() => handleDelete(lead.id)}
                             trigger={
-                              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
-                                Deletar
-                              </button>
+                        <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                          <Trash size={14} />
+                        </button>
+
                             }
                           />
                         </div>
@@ -455,7 +472,7 @@ const filteredLeads = leads.filter((lead) => {
               Adicione observações para o lead {selectedLead?.name}.
             </DialogDescription>
           </DialogHeader>
-          {/* <Form {...notesForm}>
+           <Form {...notesForm}>
             <form onSubmit={notesForm.handleSubmit(handleAddNotes)} className="space-y-4">
               <FormField
                 control={notesForm.control}
@@ -478,7 +495,7 @@ const filteredLeads = leads.filter((lead) => {
                 <Button type="submit">Salvar</Button>
               </DialogFooter>
             </form>
-          </Form> */}
+          </Form> 
         </DialogContent>
       </Dialog>
 
@@ -516,6 +533,19 @@ const filteredLeads = leads.filter((lead) => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={statusForm.control}
+                name="saleValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor da Venda</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} placeholder="Ex: 1000" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
