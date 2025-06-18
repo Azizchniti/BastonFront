@@ -367,24 +367,47 @@ const filteredLeads = leads.filter((lead) => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={leadForm.control}
-                name="sale_value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor da Venda</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Ex: 1500"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+  <FormField
+            control={leadForm.control}
+            name="sale_value"
+            render={({ field }) => {
+              const [rawValue, setRawValue] = useState(() =>
+                field.value ? String(Math.round(Number(field.value) * 100)) : ""
+              );
+
+              const formatCurrency = (value: string) => {
+                const cleaned = value.replace(/\D/g, "");
+                const number = parseFloat(cleaned) / 100;
+                return isNaN(number)
+                  ? ""
+                  : number.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    });
+              };
+
+              return (
+                <FormItem>
+                  <FormLabel>Valor da Venda</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Ex: R$ 1.500,00"
+                      value={formatCurrency(rawValue)}
+                      onChange={(e) => {
+                        const onlyNumbers = e.target.value.replace(/\D/g, "");
+                        setRawValue(onlyNumbers);
+                        const floatValue = parseFloat(onlyNumbers) / 100;
+                        field.onChange(floatValue);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
 
 
               <FormField
