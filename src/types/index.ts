@@ -15,6 +15,7 @@ export interface User {
   email: string;
   role: UserRole;
   createdAt: Date;
+   profile_picture?: string;
 }
 
 export interface Member {
@@ -27,7 +28,8 @@ export interface Member {
   total_commission: number;
   first_name: string;
   last_name: string;
-  upline_id: string | null; // Assuming upline_id can be nullable
+  upline_id: string | null; 
+  profile_picture?: string;// Assuming upline_id can be nullable
   // Add any other fields that might exist in your table if necessary
 }
 

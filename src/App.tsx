@@ -33,6 +33,7 @@ import NewLead from "./pages/member/NewLead";
 import MemberMural from "./pages/member/Mural";
 import RankingPage from "./pages/member/Ranking";
 import ProfilePage from "./pages/member/Profile";
+import MemberGraduation from "./pages/member/Graduation";
 
 import Signup from "./pages/Signup";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
@@ -215,7 +216,8 @@ const App = () => (
                 path="/member/grade" 
                 element={
                   <AuthenticatedLayout requiredRole="member">
-                    <div>Página de Graduação (Membro)</div>
+                
+                    <MemberGraduation/>
                   </AuthenticatedLayout>
                 } 
               />

@@ -50,12 +50,61 @@ useEffect(() => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 py-10 space-y-2">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
-          {member.first_name[0]}
-        </div>
+    <div className="flex flex-col items-center gap-2">
+  <div className="relative w-24 h-24">
+    {member.profile_picture ? (
+      <img
+        src={member.profile_picture}
+        alt="Profile"
+        className="w-24 h-24 rounded-full object-cover"
+      />
+    ) : (
+      <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
+        {member.first_name[0]}
+      </div>
+    )}
+
+    {/* Hidden input */}
+    <input
+      id="file-upload"
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={async (e) => {
+        if (!e.target.files || e.target.files.length === 0 || !user) return;
+        const file = e.target.files[0];
+        try {
+          const result = await MemberService.uploadProfilePicture(user.id, file);
+          toast.success("Foto de perfil atualizada!");
+          const updated = await MemberService.getMemberById(user.id);
+          setCurrentMember(updated);
+        } catch (err) {
+          toast.error("Erro ao enviar a imagem.");
+          console.error(err);
+        }
+      }}
+    />
+
+    {/* Plus button label */}
+    <label
+      htmlFor="file-upload"
+      className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-lg border-2 border-white"
+      title="Alterar foto"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={3}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </label>
+  </div>
 
         <div className="space-y-1 text-center sm:text-left">
           <h1 className="text-2xl font-bold">
@@ -73,64 +122,66 @@ useEffect(() => {
       <Separator />
 
       {/* Info Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="flex justify-between items-center pb-2">
-            <CardTitle className="text-sm font-medium">CPF</CardTitle>
-            <Hash className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold">{member.cpf}</p>
-          </CardContent>
-        </Card>
+ {/* Info Grid */}
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <Card>
+    <CardHeader className="flex justify-between items-center pb-2">
+      <CardTitle className="text-sm font-medium">CPF</CardTitle>
+      <Hash className="w-4 h-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent className="text-center">
+      <p className="text-lg font-semibold">{member.cpf}</p>
+    </CardContent>
+  </Card>
 
-        <Card>
-          <CardHeader className="flex justify-between items-center pb-2">
-            <CardTitle className="text-sm font-medium">Telefone</CardTitle>
-            <Phone className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold">{member.phone}</p>
-          </CardContent>
-        </Card>
-      </div>
+  <Card>
+    <CardHeader className="flex justify-between items-center pb-2">
+      <CardTitle className="text-sm font-medium">Telefone</CardTitle>
+      <Phone className="w-4 h-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent className="text-center">
+      <p className="text-lg font-semibold">{member.phone}</p>
+    </CardContent>
+  </Card>
+</div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-green-100">
-          <CardHeader className="flex justify-between items-center pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
-            <DollarSign className="w-5 h-5 text-green-800" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-bold text-green-900">
-              R$ {member.total_sales.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
+{/* Stats Grid */}
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <Card className="bg-green-100">
+    <CardHeader className="flex justify-between items-center pb-2">
+      <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
+      <DollarSign className="w-5 h-5 text-green-800" />
+    </CardHeader>
+    <CardContent className="text-center">
+      <p className="text-xl font-bold text-green-900">
+        R$ {member.total_sales.toFixed(2)}
+      </p>
+    </CardContent>
+  </Card>
 
-        <Card className="bg-blue-100">
-          <CardHeader className="flex justify-between items-center pb-2">
-            <CardTitle className="text-sm font-medium">Contatos Totais</CardTitle>
-            <Users className="w-5 h-5 text-blue-800" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-bold text-blue-900">{member.total_contacts}</p>
-          </CardContent>
-        </Card>
+  <Card className="bg-blue-100">
+    <CardHeader className="flex justify-between items-center pb-2">
+      <CardTitle className="text-sm font-medium">Contatos Totais</CardTitle>
+      <Users className="w-5 h-5 text-blue-800" />
+    </CardHeader>
+    <CardContent className="text-center">
+      <p className="text-xl font-bold text-blue-900">{member.total_contacts}</p>
+    </CardContent>
+  </Card>
 
-        <Card className="bg-purple-100">
-          <CardHeader className="flex justify-between items-center pb-2">
-            <CardTitle className="text-sm font-medium">Comissões Totais</CardTitle>
-            <BarChart3 className="w-5 h-5 text-purple-800" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-bold text-purple-900">
-              R$ {member.total_commission.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+  <Card className="bg-purple-100">
+    <CardHeader className="flex justify-between items-center pb-2">
+      <CardTitle className="text-sm font-medium">Comissões Totais</CardTitle>
+      <BarChart3 className="w-5 h-5 text-purple-800" />
+    </CardHeader>
+    <CardContent className="text-center">
+      <p className="text-xl font-bold text-purple-900">
+        R$ {member.total_commission.toFixed(2)}
+      </p>
+    </CardContent>
+  </Card>
+</div>
+
     </div>
   );
 };

@@ -48,7 +48,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Search, Plus, FileEdit } from "lucide-react";
+import { Search, Plus, FileEdit, NotebookText, Pencil } from "lucide-react";
 import {
   Tabs,
   TabsContent,
@@ -70,7 +70,7 @@ const leadFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   phone: z.string().min(10, "Telefone deve ter no mínimo 10 dígitos"),
   source: z.string().min(1, "Origem é obrigatória"),
-  sale_value: z.number().min(1, "Selecione um preço"),
+ // sale_value: z.number().min(1, "Selecione um preço"),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
@@ -101,6 +101,8 @@ const MemberLeads: React.FC = () => {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+const { updateLead } = useData();
 
   const leadForm = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
@@ -108,7 +110,7 @@ const MemberLeads: React.FC = () => {
       name: "",
       phone: "",
       source: "",
-       sale_value: 0,
+     //  sale_value: 0,
     },
   });
 
@@ -124,8 +126,9 @@ const MemberLeads: React.FC = () => {
         phone: values.phone,
         source: values.source,
         status: "new",
-        member_id: user.id, 
-        sale_value: values.sale_value,
+        member_id: user.id,
+        sale_value:0
+      //  sale_value: values.sale_value,
       });
 
       if (success) {
@@ -184,6 +187,13 @@ const openNotesDialog = (lead: Lead) => {
   notesForm.setValue("notes", lead.notes || "");
   setIsNotesDialogOpen(true);
 };
+const handleEditLead = (lead: Lead) => {
+  setEditingLead(lead);
+  leadForm.setValue("name", lead.name);
+  leadForm.setValue("phone", lead.phone);
+  leadForm.setValue("source", lead.source);
+};
+
 
 const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: boolean }) => (
   <div className="rounded-md border">
@@ -230,8 +240,13 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
                   size="sm"
                   onClick={() => openNotesDialog(lead)}
                 >
-                  Observações
+                  <NotebookText />
                 </Button>
+                  {lead.status === "new" && (
+      <Button variant="ghost" size="sm" onClick={() => handleEditLead(lead)}>
+        <Pencil />
+      </Button>
+    )}
               </TableCell>
 
             </TableRow>
@@ -343,7 +358,7 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
             control={leadForm.control}
             name="sale_value"
             render={({ field }) => {
@@ -383,7 +398,7 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
                 </FormItem>
               );
             }}
-          />
+          /> */}
 
 
               <DialogFooter>
@@ -410,7 +425,7 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Observações</FormLabel>
+                          <FormLabel>Observaçaos: </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Digite as observações sobre este lead..."
@@ -429,6 +444,80 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
                 </Form> 
               </DialogContent>
             </Dialog>
+
+            <Dialog open={!!editingLead} onOpenChange={() => setEditingLead(null)}>
+  <DialogContent className="sm:max-w-[500px]">
+    <DialogHeader>
+      <DialogTitle>Editar Lead</DialogTitle>
+      <DialogDescription>
+        Atualize as informações do lead {editingLead?.name}
+      </DialogDescription>
+    </DialogHeader>
+
+    <Form {...leadForm}>
+      <form
+        onSubmit={leadForm.handleSubmit(async (values) => {
+          if (!editingLead) return;
+          await updateLead(editingLead.id, {
+            name: values.name,
+            phone: values.phone,
+            source: values.source,
+          });
+          toast.success("Lead atualizado com sucesso!");
+          setEditingLead(null);
+        })}
+        className="space-y-4"
+      >
+        <FormField
+          control={leadForm.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={leadForm.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telefone</FormLabel>
+              <FormControl>
+                <Input placeholder="Telefone" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={leadForm.control}
+          name="source"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Origem</FormLabel>
+              <FormControl>
+                <Input placeholder="Origem" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <DialogFooter>
+          <Button type="submit">Salvar Alterações</Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  </DialogContent>
+</Dialog>
+
     </div>
   );
 };

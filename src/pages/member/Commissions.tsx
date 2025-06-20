@@ -168,44 +168,49 @@ const MemberCommissions = () => {
               {filteredCommissions.length > 0 ? (
                 <ul className="space-y-2">
                   {filteredCommissions.map((c) => (
-                    <li
-                      key={c.id}
-                      className="rounded-xl border p-4 shadow-sm hover:shadow-md transition bg-white dark:bg-muted"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Lote</p>
-                          <p className="font-medium">{getLeadNameById(c.lead_id)}</p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-muted-foreground">Valor</p>
-                          <p className="font-semibold text-green-600 dark:text-green-400">
-                            {formatCurrency(c.commission_value)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-muted-foreground">Status</p>
-                          <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                              c.is_paid
-                                ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-100"
-                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-100"
-                            }`}
-                          >
-                            {c.is_paid ? "Paga" : "Pendente"}
-                          </span>
-                        </div>
-
-                        <div>
-                          <p className="text-sm text-muted-foreground">Data</p>
-                          <p className="font-medium">
-                            {new Date(c.payment_date).toLocaleDateString()}
-                          </p>
-                        </div>
+                  <li
+                    key={c.id}
+                    className="rounded-xl border p-4 shadow-sm hover:shadow-md transition bg-white dark:bg-muted"
+                  >
+                    <div className="grid grid-cols-4 gap-4 text-sm sm:text-base">
+                      {/* Lote */}
+                      <div>
+                        <p className="text-muted-foreground">Lote</p>
+                        <p className="font-medium truncate">{getLeadNameById(c.lead_id)}</p>
                       </div>
-                    </li>
+
+                      {/* Valor */}
+                      <div className="text-right">
+                        <p className="text-muted-foreground">Valor</p>
+                        <p className="font-semibold text-green-600 dark:text-green-400">
+                          {formatCurrency(c.commission_value)}
+                        </p>
+                      </div>
+
+                      {/* Status */}
+                      <div className="text-right">
+                        <p className="text-muted-foreground">Status</p>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                            c.is_paid
+                              ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-100"
+                              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-100"
+                          }`}
+                        >
+                          {c.is_paid ? "Paga" : "Pendente"}
+                        </span>
+                      </div>
+
+                      {/* Data */}
+                      <div className="text-right">
+                        <p className="text-muted-foreground">Data</p>
+                        <p className="font-medium">
+                          {new Date(c.payment_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+
 
                   ))}
                 </ul>

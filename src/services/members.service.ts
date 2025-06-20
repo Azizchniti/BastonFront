@@ -4,6 +4,7 @@ import { Squad } from '@/types';
 
 // Backend API base URL (adjust if needed)
 const API_URL = 'https://pfp-backend-0670.onrender.com/api/members';
+const UPLOAD_URL = 'https://pfp-backend-0670.onrender.com/api/upload';
 
 type TopSquad = {
   leader: Member;
@@ -52,7 +53,7 @@ export const MemberService = {
     const response = await axios.get(`${API_URL}/top`);
     return response.data;
   },
-    async getTopSquads(): Promise<TopSquad[]> {
+  async getTopSquads(): Promise<TopSquad[]> {
     const response = await axios.get(`${API_URL}/top-squads`);
     return response.data;
   },
@@ -60,6 +61,20 @@ export const MemberService = {
   // Example logic to determine member line
   if (id.startsWith("1")) return 1;
   return 2;
-}
+},
+
+  async uploadProfilePicture(userId: string, file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await axios.post(`${UPLOAD_URL}/profile-picture/${userId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  },
+
 
 };
