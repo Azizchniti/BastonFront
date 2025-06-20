@@ -34,7 +34,10 @@ const MemberDashboard: React.FC = () => {
   console.log(leads)
   console.log(user)
   const [activeTab, setActiveTab] = useState("personal");
-    const [squadMetrics, setSquadMetrics] = useState<Squad | null>(null);
+  const [squadMetrics, setSquadMetrics] = useState<Squad | null>(null);
+  const [startDate, setStartDate] = useState<string>(""); // e.g., "2024-01-01"
+  const [endDate, setEndDate] = useState<string>("");     // e.g., "2024-12-31"
+
 
   // O usuário atual está garantido como sendo um Member pelo layout autenticado
   const [currentMember, setCurrentMember] = useState<Member | null>(null);
@@ -128,6 +131,32 @@ useEffect(() => {
     name: `${mc.month.substring(0, 3)}/${mc.year.toString().substring(2)}`,
     valor: mc.totalCommission,
   })).reverse();
+
+const isInRange = (dateInput: string | Date) => {
+  const date = new Date(dateInput);
+  return (!startDate || date >= new Date(startDate)) &&
+         (!endDate || date <= new Date(endDate));
+};
+
+
+const filteredLeads = memberLeads.filter(
+  lead => lead.status === "closed" && isInRange(lead.created_at)
+);
+
+const filteredCommissions = memberCommissions.filter(
+  commission => isInRange(commission.sale_date)
+);
+
+const filteredSalesValue = filteredLeads.reduce(
+  (sum, lead) => sum + (lead.sale_value || 0),
+  0
+);
+
+const filteredCommissionTotal = filteredCommissions.reduce(
+  (sum, commission) => sum + (commission.commission_value || 0),
+  0
+);
+
   
   // Métricas pessoais para os cards
 const personalMetrics = [
@@ -150,36 +179,30 @@ const personalMetrics = [
     color: "text-green-500",
     link: "/member/leads",
   },
-  {
-    title: "Volume de Vendas",
-   value:
-  typeof totalSalesValue === "number"
-    ? new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(totalSalesValue)
-    : "R$ 0,00",
+ {
+  title: "Volume de Vendas",
+  value: new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(filteredSalesValue),
+  description: "Valor total de vendas realizadas",
+  icon: DollarSign,
+  color: "text-emerald-500",
+  link: "/member/leads",
+},
 
-    description: "Valor total de vendas realizadas",
-    icon: DollarSign,
-    color: "text-emerald-500",
-    link: "/member/leads",
-  },
-  {
-    title: "Total em Comissões",
-    value:
-     typeof currentMember?.total_commission === "number"
-    ? new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(currentMember.total_commission)
-    : "R$ 0,00",
+ {
+  title: "Total em Comissões",
+  value: new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(filteredCommissionTotal),
+  description: "Valor acumulado em comissões",
+  icon: TrendingUp,
+  color: "text-amber-500",
+  link: "/member/commissions",
+},
 
-    description: "Valor acumulado em comissões",
-    icon: TrendingUp,
-    color: "text-amber-500",
-    link: "/member/commissions",
-  },
 ];
 
 const squadMetricsCards = [
@@ -236,12 +259,39 @@ const formatCurrency = (value: number) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Bem-vindo, {currentMember.first_name+" "+currentMember.last_name}
-        </p>
-      </div>
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+  <div>
+    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+    <p className="text-muted-foreground">
+      Bem-vindo, {currentMember.first_name + " " + currentMember.last_name}
+    </p>
+  </div>
+
+  <div className="flex items-end gap-4 bg-muted/30 p-4 rounded-xl shadow-sm border w-full md:w-auto">
+    <div className="space-y-1">
+      <label className="text-sm font-medium text-muted-foreground">
+        Data Início
+      </label>
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+        className="border border-input bg-background text-sm rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+    </div>
+    <div className="space-y-1">
+      <label className="text-sm font-medium text-muted-foreground">
+        Data Fim
+      </label>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="border border-input bg-background text-sm rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+    </div>
+  </div>
+</div>
 
       {/* Status de graduação */}
       <Card className="neo border-none">
