@@ -286,7 +286,7 @@ const handleAddMember = async () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Gestão de Membros</h1>
+        <h1 className="text-2xl font-bold">Gestão de Parceiros</h1>
         
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
@@ -403,9 +403,9 @@ const handleAddMember = async () => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Membros</CardTitle>
+          <CardTitle>Lista de Parceiros</CardTitle>
           <CardDescription>
-            Gerencie todos os membros cadastrados na plataforma.
+            Gerencie todos os Parceiros cadastrados na plataforma.
           </CardDescription>
           
           <div className="flex items-center space-x-2 mt-2">
@@ -637,7 +637,7 @@ const handleAddMember = async () => {
           
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              Se este membro tiver outros membros no seu squad, eles serão transferidos para o upline deste membro.
+              Se este membro tiver outros parceiros no seu squad, eles serão transferidos para o upline deste membro.
             </p>
           </div>
           

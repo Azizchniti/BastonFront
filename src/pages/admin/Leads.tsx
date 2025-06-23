@@ -259,7 +259,7 @@ const filteredLeads = leads.filter((lead) => {
                   {/* <TableHead>Status</TableHead> */}
                   <TableHead>Membro Responsável</TableHead>
                   <TableHead>Data de Cadastro</TableHead>
-                  <TableHead>Sale value</TableHead>
+                  <TableHead>Valor em Venda</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>

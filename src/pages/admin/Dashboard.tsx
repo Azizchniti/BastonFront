@@ -42,6 +42,8 @@ const AdminDashboard: React.FC = () => {
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [loadingLeads, setLoadingLeads] = useState(true);
   const [topMembers, setTopMembers] = useState<MyMember[]>([]);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
    useEffect(() => {
     const fetchMembers = async () => {
@@ -116,41 +118,70 @@ const AdminDashboard: React.FC = () => {
     { name: "Diamond", value: memberGradeData.diamond || 0, color: "#10b981" }
   ];
 
+  const isInRange = (dateInput: string | Date) => {
+  const date = new Date(dateInput);
+  return (!startDate || date >= new Date(startDate)) &&
+         (!endDate || date <= new Date(endDate));
+};
+
+const filteredCommissions = commissions.filter(c => isInRange(c.sale_date));
+const filteredLeads = leads.filter(lead => lead.status === "closed" && isInRange(lead.created_at));
+
+const filteredSalesValue = filteredLeads.reduce(
+  (sum, lead) => sum + (lead.sale_value || 0),
+  0
+);
+
+const paidFilteredCommissionAmount = filteredCommissions
+  .filter(c => c.is_paid)
+  .reduce((sum, c) => sum + (c.commission_value || 0), 0);
+
+
+
   // Métricas para cartões
   const metrics = [
-    {
-      title: "Total de Membros",
-      value: totalMembers,
-      subtext: `${topMembers[0]?.grade === "diamond" ? "1" : "0"} Diamond`,
-      icon: User,
-      color: "text-blue-500",
-      link: "/admin/members"
-    },
-    {
-      title: "Total de Leads",
-      value: totalLeads,
-      subtext: `${conversionRate.toFixed(1)}% de conversão`,
-      icon: PhoneCall,
-      color: "text-indigo-500",
-      link: "/admin/leads"
-    },
-    {
-      title: "Vendas Fechadas",
-      value: leadCountsByStatus.closed,
-      subtext: `R$ ${(totalSalesValue / 1000).toFixed(1)}k em vendas`,
-      icon: CheckCircle,
-      color: "text-green-500",
-      link: "/admin/leads"
-    },
+  {
+    title: "Total de Parceiros",
+    value: totalMembers,
+    subtext: `${topMembers[0]?.grade === "diamond" ? "1" : "0"} Diamond`,
+    icon: User,
+    color: "text-blue-500",
+    link: "/admin/members"
+  },
+  {
+    title: "Total de Leads",
+    value: totalLeads,
+    subtext: `${conversionRate.toFixed(1)}% de conversão`,
+    icon: PhoneCall,
+    color: "text-indigo-500",
+    link: "/admin/leads"
+  },
+  {
+    title: "Vendas Fechadas",
+    value: filteredLeads.length,
+    subtext: `R$ ${(filteredSalesValue / 1000).toFixed(1)}k em vendas`,
+    icon: CheckCircle,
+    color: "text-green-500",
+    link: "/admin/leads"
+  },
     {
       title: "Comissões Pagas",
-      value: paidCommissions,
-      subtext: `${((paidCommissions / totalCommissions) * 100).toFixed(1)}% do total`,
+      value: new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(paidFilteredCommissionAmount),
+      subtext: `${(
+        (paidFilteredCommissionAmount / 
+          filteredCommissions.reduce((sum, c) => sum + (c.commission_value || 0), 0) || 0
+        ) * 100
+      ).toFixed(1)}% do total`,
       icon: DollarSign,
       color: "text-amber-500",
       link: "/admin/commissions"
     }
-  ];
+
+];
+
 
   // Obter os squads principais (cabeças de squad)
   const getTopSquads = () => {
@@ -203,20 +234,31 @@ const AdminDashboard: React.FC = () => {
             Visão geral da plataforma e métricas principais
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex gap-2">
-          <Link to="/admin/members/new">
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Novo Membro
-            </Button>
-          </Link>
-          <Link to="/admin/reports">
-            <Button variant="outline">
-              <FileText className="mr-2 h-4 w-4" />
-              Relatórios
-            </Button>
-          </Link>
-        </div>
+      <div className="flex items-end gap-4 bg-muted/30 p-4 rounded-xl shadow-sm border w-full md:w-auto mb-6">
+  <div className="space-y-1">
+    <label className="text-sm font-medium text-muted-foreground">
+      Data Início
+    </label>
+    <input
+      type="date"
+      value={startDate}
+      onChange={(e) => setStartDate(e.target.value)}
+      className="border border-input bg-background text-sm rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+    />
+  </div>
+  <div className="space-y-1">
+    <label className="text-sm font-medium text-muted-foreground">
+      Data Fim
+    </label>
+    <input
+      type="date"
+      value={endDate}
+      onChange={(e) => setEndDate(e.target.value)}
+      className="border border-input bg-background text-sm rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+    />
+  </div>
+</div>
+
       </div>
 
       {/* Cards de métricas */}
@@ -244,7 +286,106 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Ranking de Squads */}
+       {/* Top Membros */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Parceiros</CardTitle>
+          <CardDescription>
+            Parceiros com maior volume de vendas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-8">
+            {topMembers.map((member, index) => (
+              <div key={member.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm w-5 text-center">{index + 1}.</span>
+                    <span className="font-medium"><td>{member.first_name+" "+member.last_name}</td></span>
+                    <Badge className={`${gradeColors[member.grade as MemberGrade]}`}>
+                      {gradeLabels[member.grade as MemberGrade]}
+                    </Badge>
+                  </div>
+                   <span className="text-sm font-semibold">
+                    R$ {member.total_sales}
+                  </span> 
+                </div>
+                <Progress value={(member.total_sales / (topMembers[0]?.total_sales || 1)) * 100} className="h-2" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+     
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Gráfico de status de leads */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Status dos Leads</CardTitle>
+            <CardDescription>
+              Distribuição de leads por status
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={leadStatusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
+                >
+                  {leadStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [value, "Leads"]} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        
+{/* Gráfico de graduação de membros */}
+            <Card>
+        <CardHeader>
+          <CardTitle>Graduação dos Parceiros</CardTitle>
+          <CardDescription>
+            Distribuição de Parceiros por nível
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={gradeChartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+                labelLine={false} // remove lines to text
+                label={false} // or use a custom label if needed
+              >
+                {gradeChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value) => [value, "Membros"]} />
+              <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+
+         {/* Ranking de Squads */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -293,101 +434,9 @@ const AdminDashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Gráfico de status de leads */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Status dos Leads</CardTitle>
-            <CardDescription>
-              Distribuição de leads por status
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={leadStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                >
-                  {leadStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, "Leads"]} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Gráfico de graduação de membros */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Graduação dos Membros</CardTitle>
-            <CardDescription>
-              Distribuição de membros por nível
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={gradeChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                >
-                  {gradeChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [value, "Membros"]} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Top Membros */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Membros</CardTitle>
-          <CardDescription>
-            Membros com maior volume de vendas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-8">
-            {topMembers.map((member, index) => (
-              <div key={member.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm w-5 text-center">{index + 1}.</span>
-                    <span className="font-medium"><td>{member.first_name+" "+member.last_name}</td></span>
-                    <Badge className={`${gradeColors[member.grade as MemberGrade]}`}>
-                      {gradeLabels[member.grade as MemberGrade]}
-                    </Badge>
-                  </div>
-                   <span className="text-sm font-semibold">
-                    R$ {member.total_sales}
-                  </span> 
-                </div>
-                <Progress value={(member.total_sales / (topMembers[0]?.total_sales || 1)) * 100} className="h-2" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+     
     </div>
   );
 };

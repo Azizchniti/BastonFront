@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: BarChart3,
     },
     {
-      title: "Membros",
+      title: "Parceiros",
       href: "/admin/members",
       icon: Users,
     },
@@ -85,11 +85,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/admin/mural",
       icon: Megaphone,
     },
-    {
-      title: "Relatórios",
-      href: "/admin/reports",
-      icon: LineChart,
-    },
+    // {
+    //   title: "Relatórios",
+    //   href: "/admin/reports",
+    //   icon: LineChart,
+    // },
   ];
 
   const memberLinks = [
@@ -138,11 +138,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/member/mural",
       icon: Megaphone,
     },
-    {
-      title: "Graduação",
-      href: "/member/grade",
-      icon: GraduationCap,
-    },
+    // {
+    //   title: "Graduação",
+    //   href: "/member/grade",
+    //   icon: GraduationCap,
+    // },
   ];
 
   const links = isAdmin ? adminLinks : memberLinks;
@@ -216,18 +216,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {!isCollapsed && isAdmin && (
           <div className="mt-6">
-            <Separator className="my-2" />
+            {/* <Separator className="my-2" /> */}
             <div className="px-3 py-2">
-              <p className="text-sm font-medium text-muted-foreground">Relatórios rápidos</p>
+              {/* <p className="text-sm font-medium text-muted-foreground">Relatórios rápidos</p> */}
               <div className="mt-3 space-y-2">
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                {/* <Button variant="outline" size="sm" className="w-full justify-start">
                   <LineChart className="w-4 h-4 mr-2" />
                   Comissões mensais
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <Trophy className="w-4 h-4 mr-2" />
                   Top 10 membros
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>
@@ -241,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               {user?.first_name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-medium truncate">{user?.name}</span>
+              <span className="text-sm font-medium truncate">{user?.first_name+" "+user?.last_name}</span>
               <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
             </div>
           </div>
