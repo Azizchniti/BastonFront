@@ -8,14 +8,15 @@ export type LeadStatus = 'new' | 'contacted' | 'in-progress' | 'negotiating' | '
 export type AnnouncementType = 'news' | 'notice' | 'announcement';
 
 
-export interface User {
+export interface profile {
   id: string;
   first_name:string;
   last_name:string;
   email: string;
   role: UserRole;
   createdAt: Date;
-   profile_picture?: string;
+  cpf: string;
+  phone: string;
 }
 
 export interface Member {

@@ -50,9 +50,10 @@ import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Member } from "@/types/member.types";
-import { MemberGrade } from "@/types";
+import { MemberGrade, profile } from "@/types";
 import axios from "axios";
 import { signUp } from "@/services/auth-service";
+import { UserService } from "@/services/user.service";
 
 const gradeColors = {
   beginner: "bg-slate-500",
@@ -72,6 +73,7 @@ const gradeLabels = {
 
 const MembersPage = () => {
 const [members, setMembers] = useState<Member[]>([]);
+const [users, setUsers] = useState<profile[]>([]);
  const [loading, setLoading] = useState<boolean>(true);
   const {  updateMember, deleteMember } = useData();
   const { user } = useAuth();
@@ -85,19 +87,29 @@ const [members, setMembers] = useState<Member[]>([]);
     direction: 'ascending' | 'descending';
   }>({ key: null, direction: 'ascending' });
 
-  useEffect(() => {
-  const loadMembers = async () => {
+useEffect(() => {
+  const loadMembersAndUsers = async () => {
+    setLoading(true); // optional: only set once
     try {
-      const data = await MemberService.getAllMembers();
-      setMembers(data);
+      const [memberData, userData] = await Promise.all([
+        MemberService.getAllMembers(),
+        UserService.getAllUsers(),
+      ]);
+
+      setMembers(memberData);
+      setUsers(userData);
     } catch (error) {
-      toast.error("Erro ao buscar membros");
+      toast.error("Erro ao buscar membros ou usuários");
     } finally {
       setLoading(false);
     }
   };
-  loadMembers();
+
+  loadMembersAndUsers();
 }, []);
+const admins = users.filter(u => u.role !== "member");
+
+
 
 
   // Formulário para novo membro
@@ -282,6 +294,101 @@ const handleAddMember = async () => {
     setSelectedMember(member);
     setDeleteDialogOpen(true);
   };
+
+
+  // Editar um usuário administrador
+
+  const [formPata, setFormPata] = useState({
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "", // keep if you're using it later
+  cpf: "",
+  grade: "",    // only used for members
+  phone: "",
+  role: "admin", // member/admin
+});
+
+const handleEditAdminDialogOpen = (admin: profile) => {
+  setSelectedMember(null); // Clear member
+  setSelectedUserId(admin.id); // <-- THIS is missing
+
+  setFormPata({
+    first_name: admin.first_name,
+    last_name: admin.last_name,
+    email: admin.email,
+    password: "",       // optional
+    cpf: admin.cpf || "",
+    grade: "",          // not used for admins
+    phone: admin.phone || "",
+    role: admin.role,
+  });
+
+  setEditDialogOpen(true);
+};
+
+const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+const handleEditUser = async () => {
+  if (!selectedUserId) return;
+
+  // Validate fields
+  if (!formPata.first_name || !formPata.last_name || !formPata.email) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
+
+  try {
+    await UserService.updateUser(selectedUserId, {
+      first_name: formPata.first_name,
+      last_name: formPata.last_name,
+      email: formPata.email,
+      cpf: formPata.cpf,
+      phone: formPata.phone,
+    });
+    toast.success("Administrador atualizado com sucesso");
+    const refreshedUsers = await UserService.getAllUsers();
+    setUsers(refreshedUsers);
+    setEditDialogOpen(false);
+    setSelectedUserId(null);
+    resetFormPata();
+  } catch (error) {
+    toast.error("Erro ao atualizar administrador");
+  }
+};
+const resetFormPata = () => {
+  setFormPata({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    cpf: "",
+    grade: "",
+    phone: "",
+    role: "admin",
+  });
+};
+
+const handleConfirmEdit = () => {
+  if (selectedMember) {
+    handleEditMember();
+  } else {
+    handleEditUser();
+  }
+};
+
+
+// Excluir um usuário administrador
+const handleDeleteUser = async (userId: string) => {
+  try {
+    await UserService.deleteUser(userId);
+    toast.success("Administrador excluído com sucesso");
+    setDeleteDialogOpen(false);
+  } catch (error) {
+    toast.error("Erro ao excluir administrador");
+  }
+};
+
 
   return (
     <div className="space-y-6">
@@ -523,107 +630,177 @@ const handleAddMember = async () => {
           </div>
         </CardContent>
       </Card>
+      <Card className="mt-6">
+  <CardHeader>
+    <CardTitle>Administradores</CardTitle>
+    <CardDescription>Usuários com funções administrativas na plataforma.</CardDescription>
+  </CardHeader>
+
+  <CardContent>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nome</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Função</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {admins.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-6">
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <User className="h-10 w-10 mb-2" />
+                  <p>Nenhum administrador encontrado</p>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            admins.map(admin => (
+              <TableRow key={admin.id}>
+                <TableCell className="font-medium">{admin.first_name + " " + admin.last_name}</TableCell>
+                <TableCell>{admin.email}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{admin.role}</Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                <div className="flex items-center justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      handleEditAdminDialogOpen(admin);
+                      setSelectedUserId(admin.id);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      setSelectedUserId(admin.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  </CardContent>
+</Card>
+
       
       {/* Diálogo de Edição */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Membro</DialogTitle>
-            <DialogDescription>
-              Atualize os dados do membro selecionado.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">
-                Nome
-              </Label>
-             <Input
-                id="edit-first-name"
-                name="first_name"
-                type="text"
-                value={formData.first_name}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-email" className="text-right">
-                Sobrenome
-              </Label>
-              <Input
-                id="edit-last_name"
-                name="last_name"
-                type="text"
-                value={formData.last_name}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-cpf" className="text-right">
-                CPF
-              </Label>
-              <Input
-                id="edit-cpf"
-                name="cpf"
-                value={formData.cpf}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-phone" className="text-right">
-                Telefone
-              </Label>
-              <Input
-                id="edit-phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            
-          
-            <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-grade" className="text-right">
-              Grau
-            </Label>
-            <Select
-              value={formData.grade}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, grade: value as MemberGrade }))
-              }
-            >
-              <SelectTrigger className="col-span-3" id="edit-grade">
-                <SelectValue placeholder="Selecione o grau" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="beginner">Start</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="gold">Gold</SelectItem>
-                <SelectItem value="platinum">Platinum</SelectItem>
-                <SelectItem value="diamond">Diamond</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Editar {selectedMember ? "Membro" : "Administrador"}</DialogTitle>
+      <DialogDescription>
+        Atualize os dados do {selectedMember ? "membro" : "administrador"} selecionado.
+      </DialogDescription>
+    </DialogHeader>
 
-          </div>
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="button" onClick={handleEditMember}>
-              Salvar Alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    <div className="grid gap-4 py-4">
+      {/* Nome */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Nome</Label>
+        <Input
+          name="first_name"
+          value={selectedMember ? formData.first_name : formPata.first_name}
+          onChange={(e) =>
+            selectedMember
+              ? setFormData({ ...formData, first_name: e.target.value })
+              : setFormPata({ ...formPata, first_name: e.target.value })
+          }
+        />
+      </div>
+
+      {/* Sobrenome */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Sobrenome</Label>
+        <Input
+          name="last_name"
+          value={selectedMember ? formData.last_name : formPata.last_name}
+          onChange={(e) =>
+            selectedMember
+              ? setFormData({ ...formData, last_name: e.target.value })
+              : setFormPata({ ...formPata, last_name: e.target.value })
+          }
+        />
+      </div>
+
+      {/* CPF */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">CPF</Label>
+        <Input
+          name="cpf"
+          value={selectedMember ? formData.cpf : formPata.cpf}
+          onChange={(e) =>
+            selectedMember
+              ? setFormData({ ...formData, cpf: e.target.value })
+              : setFormPata({ ...formPata, cpf: e.target.value })
+          }
+        />
+      </div>
+
+      {/* Telefone */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right">Telefone</Label>
+        <Input
+          name="phone"
+          value={selectedMember ? formData.phone : formPata.phone}
+          onChange={(e) =>
+            selectedMember
+              ? setFormData({ ...formData, phone: e.target.value })
+              : setFormPata({ ...formPata, phone: e.target.value })
+          }
+        />
+      </div>
+
+      {/* Grau (only for member) */}
+      {selectedMember && (
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label className="text-right">Grau</Label>
+          <Select
+            value={formData.grade}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, grade: value as MemberGrade }))
+            }
+          >
+            <SelectTrigger className="col-span-3">
+              <SelectValue placeholder="Selecione o grau" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="beginner">Start</SelectItem>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="gold">Gold</SelectItem>
+              <SelectItem value="platinum">Platinum</SelectItem>
+              <SelectItem value="diamond">Diamond</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+
+    <DialogFooter>
+      <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+        Cancelar
+      </Button>
+      <Button type="button" onClick={handleConfirmEdit}>
+        Salvar Alterações
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
       
       {/* Diálogo de Exclusão */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
