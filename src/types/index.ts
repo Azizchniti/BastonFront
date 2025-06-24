@@ -1,7 +1,7 @@
 
 export type UserRole = 'admin' | 'member';
 
-export type MemberGrade = 'beginner' | 'standard' | 'gold' | 'platinum' | 'diamond';
+export type MemberGrade = 'silver' | 'gold' | 'platinum' | 'diamond';
 
 export type LeadStatus = 'new' | 'contacted' | 'in-progress' | 'negotiating' | 'closed' | 'lost';
 

@@ -323,6 +323,7 @@ const handleEditAdminDialogOpen = (admin: profile) => {
     phone: admin.phone || "",
     role: admin.role,
   });
+console.log("Editing admin:", admin);
 
   setEditDialogOpen(true);
 };

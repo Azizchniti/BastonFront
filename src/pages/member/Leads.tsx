@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Lead, LeadStatus, Member } from "@/types";
@@ -56,6 +56,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { MemberService } from "@/services/members.service";
+import { LeadService } from "@/services/leads.service";
 
 const LEAD_STATUS_MAP: Record<LeadStatus, string> = {
   "new": "Novo Lead",
@@ -102,7 +104,26 @@ const MemberLeads: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-const { updateLead } = useData();
+  const { updateLead } = useData();
+ const [currentMember, setCurrentMember] = useState<Member | null>(null);
+ const [loading, setLoading] = useState(true);
+
+ useEffect(() => {
+   const fetchMember = async () => {
+     if (user?.id) {
+       try {
+         const memberData = await MemberService.getMemberById(user.id);
+         setCurrentMember(memberData);
+       } catch (err) {
+         console.error("Failed to fetch member:", err);
+       } finally {
+         setLoading(false);
+       }
+     }
+   };
+ 
+   fetchMember();
+ }, [user?.id]);
 
   const leadForm = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
@@ -114,36 +135,64 @@ const { updateLead } = useData();
     },
   });
 
-  const handleSubmitLead = async (values: LeadFormValues) => {
-    if (!user) {
-      toast.error("Usuário não autenticado.");
+const handleSubmitLead = async (values) => {
+  const { phone, name, source } = values;
+
+  try {
+    // 1. Get all leads (or you can create a getLeadByPhone() endpoint later)
+    const allLeads = await LeadService.getAllLeads();
+    const existingLead = allLeads.find((lead) => lead.phone === phone);
+
+    // 2. If no lead exists, create it
+    if (!existingLead) {
+      await LeadService.createLead({
+        name,
+        phone,
+        source,
+        member_id: currentMember.id,
+      });
+      toast.success("Lead criado com sucesso!");
+      setIsAddDialogOpen(false);
       return;
     }
 
-    try {
-      const success = await addLead({
-        name: values.name,
-        phone: values.phone,
-        source: values.source,
-        status: "new",
-        member_id: user.id,
-        sale_value:0
-      //  sale_value: values.sale_value,
-      });
-
-      if (success) {
-        toast.success("Lead criado com sucesso!");
-        setIsAddDialogOpen(false)
-        
-      } else {
-        toast.error("Erro ao criar o lead.");
-        setIsAddDialogOpen(false)
-      }
-    } catch (err) {
-      console.error("Erro ao criar lead:", err);
-      toast.error("Erro inesperado ao criar lead.");
+    // 3. If lead is already owned by the current member
+    if (existingLead.member_id === currentMember.id) {
+      toast.error("Este lead já está cadastrado por você.");
+      return;
     }
-  };
+
+    // 4. If lead is owned by someone else, check age
+    const createdAt = new Date(existingLead.created_at);
+    const now = new Date();
+    const ageInDays = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (ageInDays < 15) {
+      toast.error("Lead já cadastrado por outro membro.");
+      return;
+    }
+
+    // 5. Offer to transfer ownership if 15+ days passed
+    const confirm = window.confirm(
+      "Este lead foi criado há mais de 15 dias por outro membro. Deseja assumir esse lead?"
+    );
+
+    if (!confirm) return;
+
+    // 6. Update ownership
+    await LeadService.updateLead(existingLead.id, {
+      member_id: currentMember.id,
+      created_at: new Date().toISOString(),
+    });
+
+    toast.success("Lead assumido com sucesso!");
+    setIsAddDialogOpen(false);
+  } catch (err) {
+    console.error("Erro ao criar ou verificar lead:", err);
+    toast.error("Erro ao processar o lead.");
+  }
+};
+
   const handleAddNotes = (values: NotesFormValues) => {
     if (!selectedLead) return;
 
