@@ -15,7 +15,7 @@ import { MemberService } from "@/services/members.service";
 // Define grade colors mapping
 const gradeColors = {
   beginner: "bg-slate-500",
-  standard: "bg-blue-500",
+  silver: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
   diamond: "bg-emerald-500"
@@ -316,9 +316,9 @@ const formatCurrency = (value: number) => {
                 </div>
               <Progress value={levelProgress.percentage} className="h-2.5" />
 
-                <div className="grid grid-cols-5 text-xs text-muted-foreground">
-                  <div className="text-center">Beginner</div>
-                  <div className="text-center">Standard</div>
+                <div className="grid grid-cols-4 text-xs text-muted-foreground">
+                  {/* <div className="text-center">Beginner</div> */}
+                  <div className="text-center">Silver</div>
                   <div className="text-center">Gold</div>
                   <div className="text-center">Platinum</div>
                   <div className="text-center">Diamond</div>
@@ -625,8 +625,7 @@ function getNextLevelProgress(
   totalSales: number
 ): { percentage: number; text: string } {
   const levels = [
-    { key: "beginner", min: 0, max: 100000 },
-    { key: "standard", min: 100000, max: 500000 },
+    { key: "silver", min: 0, max: 500000 },
     { key: "gold", min: 500000, max: 1000000 },
     { key: "platinum", min: 1000000, max: 10000000 },
     { key: "diamond", min: 10000000, max: Infinity },
@@ -648,14 +647,20 @@ function getNextLevelProgress(
     return { percentage: 100, text: "Nível máximo" };
   }
 
+  const step = 100 / (levels.length - 1); // Now 33.33... for 4 levels
   const levelProgress = (totalSales - currentLevel.min) / (currentLevel.max - currentLevel.min);
-  const percentage = Math.round((index * 20) + (levelProgress * 20));
+  const percentage = Math.round(index * step + levelProgress * step);
 
   const remaining = currentLevel.max - totalSales;
-  const text = `R$ ${(remaining / 1000).toFixed(1)}K para ${nextLevel.key.charAt(0).toUpperCase() + nextLevel.key.slice(1)}`;
+  const text = `R$ ${(remaining / 1000).toFixed(1)}K para ${capitalize(nextLevel.key)}`;
 
   return { percentage, text };
 }
+
+function capitalize(word: string) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 
 
 
