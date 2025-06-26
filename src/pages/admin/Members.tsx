@@ -57,7 +57,7 @@ import { UserService } from "@/services/user.service";
 
 const gradeColors = {
   beginner: "bg-slate-500",
-  standard: "bg-blue-500",
+  silver: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
   diamond: "bg-emerald-500"
@@ -65,7 +65,7 @@ const gradeColors = {
 
 const gradeLabels = {
   beginner: "Beginner",
-  standard: "Standard",
+  silver: "Silver",
   gold: "Gold",
   platinum: "Platinum",
   diamond: "Diamond"

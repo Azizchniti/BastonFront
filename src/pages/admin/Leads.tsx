@@ -256,7 +256,7 @@ const filteredLeads = leads.filter((lead) => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead>Origem</TableHead>
-                  {/* <TableHead>Status</TableHead> */}
+                   <TableHead>Status</TableHead> 
                   <TableHead>Membro Responsável</TableHead>
                   <TableHead>Data de Cadastro</TableHead>
                   <TableHead>Valor em Venda</TableHead>
@@ -276,11 +276,11 @@ const filteredLeads = leads.filter((lead) => {
                       <TableCell className="font-medium">{lead.name}</TableCell>
                       <TableCell>{lead.phone}</TableCell>
                       <TableCell>{lead.source}</TableCell>
-                      {/* <TableCell>
+                       <TableCell>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {LEAD_STATUS_MAP[lead.status]}
                         </span>
-                      </TableCell> */}
+                      </TableCell> 
                       <TableCell>
                         {(() => {
                           const member = members.find((m) => m.id === lead.member_id);

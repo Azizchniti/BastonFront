@@ -17,7 +17,7 @@ import { LeadService } from "@/services/leads.service";
 
 const gradeColors = {
   beginner: "bg-slate-500",
-  standard: "bg-blue-500",
+  silver: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
   diamond: "bg-emerald-500"
@@ -25,7 +25,7 @@ const gradeColors = {
 
 const gradeLabels = {
   beginner: "Beginner",
-  standard: "Standard",
+  silver: "Silver",
   gold: "Gold",
   platinum: "Platinum",
   diamond: "Diamond"
@@ -111,8 +111,8 @@ const AdminDashboard: React.FC = () => {
   }, {} as Record<MemberGrade, number>);
 
   const gradeChartData = [
-    { name: "Beginner", value: memberGradeData.beginner || 0, color: "#94a3b8" },
-    { name: "Standard", value: memberGradeData.standard || 0, color: "#3b82f6" },
+    // { name: "Beginner", value: memberGradeData. || 0, color: "#94a3b8" },
+    { name: "Standard", value: memberGradeData.silver || 0, color: "#3b82f6" },
     { name: "Gold", value: memberGradeData.gold || 0, color: "#eab308" },
     { name: "Platinum", value: memberGradeData.platinum || 0, color: "#8b5cf6" },
     { name: "Diamond", value: memberGradeData.diamond || 0, color: "#10b981" }
@@ -306,9 +306,12 @@ const paidFilteredCommissionAmount = filteredCommissions
                       {gradeLabels[member.grade as MemberGrade]}
                     </Badge>
                   </div>
-                   <span className="text-sm font-semibold">
-                    R$ {member.total_sales}
-                  </span> 
+                 <span className="text-sm font-semibold">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(member.total_sales)}
+                  </span>
                 </div>
                 <Progress value={(member.total_sales / (topMembers[0]?.total_sales || 1)) * 100} className="h-2" />
               </div>
