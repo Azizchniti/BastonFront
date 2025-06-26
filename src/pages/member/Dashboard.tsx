@@ -343,7 +343,7 @@ const formatCurrency = (value: number) => {
               
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Progresso para o próximo nível</span>
+                  <span>Progresso para o próximo nível: </span>
                   <span className="font-medium">
                     {currentMember.grade === "diamond" 
                       ? "Nível máximo" 
