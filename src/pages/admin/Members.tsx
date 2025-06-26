@@ -82,6 +82,7 @@ const [users, setUsers] = useState<profile[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Member | null;
     direction: 'ascending' | 'descending';
@@ -109,6 +110,41 @@ useEffect(() => {
 }, []);
 const admins = users.filter(u => u.role !== "member");
 
+ const loadPendingMembers = async () => {
+    setLoading(true);
+    try {
+      const data = await MemberService.getMembersByStatus("pending");
+      setPendingMembers(data);
+    } catch (error) {
+      toast.error("Erro ao buscar membros pendentes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPendingMembers();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      await MemberService.approveMember(id);
+      toast.success("Membro aprovado com sucesso");
+      loadPendingMembers(); // refresh list
+    } catch (error) {
+      toast.error("Erro ao aprovar membro");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await MemberService.rejectMember(id);
+      toast.success("Membro rejeitado com sucesso");
+      loadPendingMembers(); // refresh list
+    } catch (error) {
+      toast.error("Erro ao rejeitar membro");
+    }
+  };
 
 
 
@@ -697,7 +733,67 @@ const handleDeleteUser = async (userId: string) => {
     </div>
   </CardContent>
 </Card>
+  <Card>
+      <CardHeader>
+        <CardTitle>Membros Pendentes</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Sobrenome</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6">
+                  Carregando membros...
+                </TableCell>
+              </TableRow>
+            ) : pendingMembers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6">
+                  Nenhum membro pendente encontrado
+                </TableCell>
+              </TableRow>
+            ) : (
+              pendingMembers.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell>{member.first_name}</TableCell>
+                  <TableCell>{member.last_name}</TableCell>
+                  <TableCell>{member.phone}</TableCell>
+                  <TableCell>{member.status}</TableCell>
+                  <TableCell className="text-right space-x-2">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => handleApprove(member.id)}
+                  >
+                    Aprovar
+                  </Button>
 
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => handleReject(member.id)}
+                  >
+                    Rejeitar
+                  </Button>
+
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
       
       {/* Diálogo de Edição */}
     <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

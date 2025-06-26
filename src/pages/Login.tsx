@@ -44,28 +44,23 @@ const handleSubmit = async (event: React.FormEvent) => {
 
   setIsLoading(true);
   try {
-  const success = await login(email, password);
+    const success = await login(email, password);
 
-      if (success) {
-        // user is now set in context, get it
-        // you can get user from context or localStorage
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        if (user?.role) {
-          navigate(redirectUserByRole(user.role));
-        } else {
-          throw new Error("User role not found");
-        }
+    if (success) {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (user?.role) {
+        navigate(redirectUserByRole(user.role));
       } else {
-        toast.error("Falha ao entrar. Verifique suas credenciais.");
+        throw new Error("User role not found");
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro inesperado. Tente novamente.");
-    } finally {
-      setIsLoading(false);
     }
-  };
-
+} catch (error: any) {
+  console.error("Erro ao fazer login:", error);
+  toast.error(error.message); // ✅ now shows: "Sua conta ainda não foi aprovada.", etc.
+} finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-background">

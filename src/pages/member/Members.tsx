@@ -41,7 +41,7 @@ const gradeLabels = {
 
 const MemberMembersPage = () => {
   const { user } = useAuth();
-  const {  addMember, updateMember, deleteMember } = useData();
+  const {  updateMember, deleteMember } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

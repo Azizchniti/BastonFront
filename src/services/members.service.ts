@@ -75,6 +75,22 @@ export const MemberService = {
 
     return response.data;
   },
+    async getMembersByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<Member[]> {
+    const response = await axios.get(`${API_URL}/status/${status}`);
+    return response.data;
+  },
+
+  // Approve a member by id
+  async approveMember(id: string): Promise<Member> {
+    const response = await axios.put(`${API_URL}/${id}/approve`);
+    return response.data;
+  },
+
+  // Reject a member by id
+  async rejectMember(id: string): Promise<Member> {
+    const response = await axios.put(`${API_URL}/${id}/reject`);
+    return response.data;
+  },
 
 
 };

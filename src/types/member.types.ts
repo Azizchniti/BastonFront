@@ -1,3 +1,4 @@
+export type MemberStatus = 'pending' | 'approved' | 'rejected'
 export interface Member {
   id: string;
   cpf: string;
@@ -8,6 +9,7 @@ export interface Member {
   total_commission: number;
   first_name: string;
   last_name: string;
-  upline_id: string | null; // Assuming upline_id can be nullable
+  upline_id: string | null;
+  status: MemberStatus; // Assuming upline_id can be nullable
   // Add any other fields that might exist in your table if necessary
 }

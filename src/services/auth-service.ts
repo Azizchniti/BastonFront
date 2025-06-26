@@ -1,4 +1,4 @@
-import { User } from '@/types';
+import { profile } from '@/types';
 import axios from 'axios';
 
 //const API_URL = 'http://localhost:5000/api/auth';
@@ -38,21 +38,22 @@ export const signIn = async (email: string, password: string) => {
   try {
     const response = await axios.post(`${API_URL}/signin`, { email, password });
     const { token, user } = response.data;
-
-    console.log("token is:", token);
-    console.log("user is:", user);
-
     return { token, user };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Sign in error:', error);
-    return null;
+
+    // ✅ Extract backend error message if available
+    const message =
+      error?.response?.data?.message || error?.message || "Erro ao fazer login. Tente novamente.";
+
+    // ❗Throw with the real backend message
+    throw new Error(message);
   }
 };
 
 
 
-
-export async function getCurrentUser(token?: string): Promise<User | null> {
+export async function getCurrentUser(token?: string): Promise<profile | null> {
   const finalToken = token || localStorage.getItem("token");
   console.log("Using token in getCurrentUser:", finalToken);
 
