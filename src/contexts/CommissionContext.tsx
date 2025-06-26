@@ -58,12 +58,11 @@ useEffect(() => {
     return commissions.filter(commission => commission.member_id === memberId);
   };
 
-  const getMemberMonthlyCommissions = (memberId: string): MonthlyCommission[] => {
-    if (memberCommissionService) {
-      return memberCommissionService.getMemberMonthlyCommissions(memberId);
-    }
-    return [];
-  };
+const getMemberMonthlyCommissions = (memberId: string): MonthlyCommission[] => {
+  // This needs to be asynchronous if you're calling the API
+  throw new Error("This function must be called asynchronously.");
+};
+
 
   const updateCommissionPaymentStatus = (id: string, isPaid: boolean, paymentDate: Date | null) => {
     if (CommissionService.updateCommissionPaymentStatus(id, isPaid, paymentDate)) {

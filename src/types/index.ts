@@ -83,7 +83,7 @@ export interface Commission {
 export interface MonthlyCommission {
   month: string;
   year: number;
-  totalCommission: number;
+  total_commission: number;
   isPaid: boolean;
   details: Commission[];
 }

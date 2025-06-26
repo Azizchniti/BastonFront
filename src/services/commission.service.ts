@@ -1,7 +1,7 @@
 // src/services/commission.service.ts
 
 import axios from "axios";
-import { Commission } from "@/types";
+import { Commission, MonthlyCommission } from "@/types";
 
 const API_URL = "https://pfp-backend-0670.onrender.com/api/commissions"; // Adjust if needed
 let commissions: Commission[] = [];
@@ -104,6 +104,11 @@ getCommissionsForecast: (startDate?: Date, endDate?: Date) => {
     membersWithPending: new Set(filtered.map(c => c.member_id)).size,
   };
 },
+async getMemberMonthlyCommissions(memberId: string): Promise<MonthlyCommission[]> {
+  const res = await axios.get(`${API_URL}/monthly/${memberId}`);
+  return res.data;
+},
+
 
 
 };

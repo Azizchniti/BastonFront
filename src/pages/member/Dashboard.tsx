@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, CheckSquare, XSquare, DollarSign, Users, Trophy, TrendingUp, BarChart3 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import { Member, MemberGrade, Squad } from "@/types";
+import { Member, MemberGrade, MonthlyCommission, Squad } from "@/types";
 import { MemberService } from "@/services/members.service";
+import { CommissionService } from "@/services/commission.service";
 
 // Define grade colors mapping
 const gradeColors = {
@@ -37,7 +38,7 @@ const MemberDashboard: React.FC = () => {
   const [squadMetrics, setSquadMetrics] = useState<Squad | null>(null);
   const [startDate, setStartDate] = useState<string>(""); // e.g., "2024-01-01"
   const [endDate, setEndDate] = useState<string>("");     // e.g., "2024-12-31"
-
+  const [commissionData, setCommissionData] = useState<{ name: string; valor: number }[]>([]);
 
   // O usuário atual está garantido como sendo um Member pelo layout autenticado
   const [currentMember, setCurrentMember] = useState<Member | null>(null);
@@ -90,6 +91,40 @@ useEffect(() => {
 
   fetchSquad();
 }, [currentMember?.id]);
+
+useEffect(() => {
+  const fetchMonthly = async () => {
+    try {
+      console.log("Fetching monthly commissions for member ID:", currentMember.id);
+
+      const data: MonthlyCommission[] = await CommissionService.getMemberMonthlyCommissions(currentMember.id);
+
+      console.log("Raw monthly commissions response:", data);
+
+      const formatted = data
+        .slice(0, 6)
+        .map(mc => {
+          const monthLabel = `${String(mc.month).padStart(2, '0')}/${String(mc.year).toString().slice(-2)}`;
+          const valor = mc.total_commission; // ✅ Correct field
+          console.log(`Formatting: month=${monthLabel}, valor=${valor}`);
+          return { name: monthLabel, valor };
+        })
+        .reverse();
+
+
+      console.log("Formatted data for chart:", formatted);
+
+      setCommissionData(formatted);
+    } catch (err) {
+      console.error("Erro ao buscar comissões mensais:", err);
+    }
+  };
+
+  if (currentMember?.id) {
+    fetchMonthly();
+  }
+}, [currentMember]);
+
   
   if (loading || !currentMember) {
   return <div>Loading member data...</div>;
@@ -100,7 +135,8 @@ useEffect(() => {
   const memberCommissions = getMemberCommissions(currentMember.id);
 
 
-  const monthlyCommissions = getMemberMonthlyCommissions(currentMember.id);
+  // const monthlyCommissions = getMemberMonthlyCommissions(currentMember.id);
+  // console.log("monthly",monthlyCommissions);
   //const squadMetrics = getSquadMetrics(currentMember.id);
 
 
@@ -127,10 +163,10 @@ useEffect(() => {
   ];
   
   // Dados para o gráfico de comissões mensais
-  const commissionData = monthlyCommissions.slice(0, 6).map(mc => ({
-    name: `${mc.month.substring(0, 3)}/${mc.year.toString().substring(2)}`,
-    valor: mc.totalCommission,
-  })).reverse();
+  // const commissionData = monthlyCommissions.slice(0, 6).map(mc => ({
+  //   name: `${mc.month.substring(0, 3)}/${mc.year.toString().substring(2)}`,
+  //   valor: mc.totalCommission,
+  // })).reverse();
 
 const isInRange = (dateInput: string | Date) => {
   const date = new Date(dateInput);
