@@ -341,14 +341,14 @@ const formatCurrency = (value: number) => {
       : "Desconhecido"}</span></h3>
               </div>
               
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Progresso para o próximo nível: </span>
-                  <span className="font-medium">
-                    {currentMember.grade === "diamond" 
-                      ? "Nível máximo" 
-                      : levelProgress.text}
-                  </span>
+             <div className="space-y-1">
+              <div className="flex items-center justify-between text-sm gap-1">
+                <span>Progresso para o próximo nível:</span>
+                <span className="font-medium">
+                  {currentMember.grade === "diamond" 
+                    ? "Nível máximo" 
+                    : levelProgress.text}
+                </span>
                 </div>
               <Progress value={levelProgress.percentage} className="h-2.5" />
 
