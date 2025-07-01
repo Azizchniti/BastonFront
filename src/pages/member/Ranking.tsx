@@ -7,7 +7,7 @@ import { MemberService } from "@/services/members.service";
 
 const gradeColors: Record<string, string> = {
   beginner: "bg-slate-500",
-  standard: "bg-blue-500",
+  silver: "bg-blue-500",
   gold: "bg-yellow-500",
   platinum: "bg-violet-500",
   diamond: "bg-emerald-500",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -43,153 +43,24 @@ import {
   CheckCircle2 
 } from "lucide-react";
 import { generateId } from "@/utils/dataUtils";
+import { EducationService } from "@/services/EducationService";
+import { Course, Class, Certification, LearningPath } from "@/types/education.types";
 
-// Tipos de dados para o conteúdo educacional
-type ContentType = "course" | "class" | "certification" | "path";
 
-interface EducationalContent {
-  id: string;
-  title: string;
-  description: string;
-  type: ContentType;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface Course extends EducationalContent {
-  type: "course";
-  classes: string[]; // IDs das aulas associadas
-  duration: number; // duração em minutos
-}
-
-interface Class extends EducationalContent {
-  type: "class";
-  videoUrl?: string;
-  duration: number; // duração em minutos
-  materials: string[]; // links ou ids para materiais
-}
-
-interface Certification extends EducationalContent {
-  type: "certification";
-  requiredCourses: string[]; // IDs dos cursos necessários
-  maxAttempts: number;
-}
-
-interface LearningPath extends EducationalContent {
-  type: "path";
-  steps: Array<{
-    contentId: string;
-    contentType: "course" | "certification";
-    order: number;
-  }>;
-}
-
-// Dados iniciais de exemplo
-const MOCK_COURSES: Course[] = [
-  {
-    id: "course-1",
-    title: "Fundamentos de Vendas",
-    description: "Aprenda os fundamentos de vendas e técnicas de abordagem",
-    type: "course",
-    classes: ["class-1", "class-2"],
-    duration: 120,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "course-2",
-    title: "Marketing Digital Avançado",
-    description: "Estratégias avançadas de marketing digital para prospecção",
-    type: "course",
-    classes: ["class-3"],
-    duration: 180,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-const MOCK_CLASSES: Class[] = [
-  {
-    id: "class-1",
-    title: "Introdução às Técnicas de Vendas",
-    description: "Aula introdutória sobre as principais técnicas de vendas",
-    type: "class",
-    videoUrl: "https://example.com/video1",
-    duration: 45,
-    materials: ["https://example.com/material1"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "class-2",
-    title: "Abordagem e Prospecção",
-    description: "Como abordar clientes e fazer prospecção efetiva",
-    type: "class",
-    videoUrl: "https://example.com/video2",
-    duration: 60,
-    materials: ["https://example.com/material2"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "class-3",
-    title: "Estratégias de Marketing Digital",
-    description: "Estratégias modernas de marketing digital",
-    type: "class",
-    videoUrl: "https://example.com/video3",
-    duration: 90,
-    materials: ["https://example.com/material3"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-const MOCK_CERTIFICATIONS: Certification[] = [
-  {
-    id: "cert-1",
-    title: "Certificação em Vendas",
-    description: "Certificação oficial em técnicas de vendas",
-    type: "certification",
-    requiredCourses: ["course-1"],
-    maxAttempts: 3,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-const MOCK_PATHS: LearningPath[] = [
-  {
-    id: "path-1",
-    title: "Trilha de Vendedor Profissional",
-    description: "Trilha completa para formação de vendedores profissionais",
-    type: "path",
-    steps: [
-      {
-        contentId: "course-1",
-        contentType: "course",
-        order: 1
-      },
-      {
-        contentId: "course-2",
-        contentType: "course",
-        order: 2
-      },
-      {
-        contentId: "cert-1",
-        contentType: "certification",
-        order: 3
-      }
-    ],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
 
 const MemberGraduation: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
-  const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
-  const [certifications, setCertifications] = useState<Certification[]>(MOCK_CERTIFICATIONS);
-  const [paths, setPaths] = useState<LearningPath[]>(MOCK_PATHS);
+ const [courses, setCourses] = useState<Course[]>([]);
+ const [classes, setClasses] = useState<Class[]>([]);
+ const [certifications, setCertifications] = useState<Certification[]>([]);
+ const [paths, setPaths] = useState<LearningPath[]>([]);
+ 
+ 
+ useEffect(() => {
+   EducationService.getCourses().then(setCourses);
+   EducationService.getClasses().then(setClasses);
+   EducationService.getCertifications().then(setCertifications);
+   EducationService.getPaths().then(setPaths);
+ }, []);
 
   const [newCourse, setNewCourse] = useState<Partial<Course>>({
     title: "",

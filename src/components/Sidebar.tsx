@@ -75,11 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/admin/commissions",
       icon: DollarSign,
     },
-    {
-      title: "Graduação",
-      href: "/admin/graduation",
-      icon: GraduationCap,
-    },
+    // {
+    //   title: "Graduação",
+    //   href: "/admin/graduation",
+    //   icon: GraduationCap,
+    // },
     {
       title: "Mural",
       href: "/admin/mural",
@@ -139,10 +139,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: Megaphone,
     },
     // {
-    //   title: "Graduação",
+    //    title: "Graduação",
     //   href: "/member/grade",
     //   icon: GraduationCap,
-    // },
+    //  },
   ];
 
   const links = isAdmin ? adminLinks : memberLinks;

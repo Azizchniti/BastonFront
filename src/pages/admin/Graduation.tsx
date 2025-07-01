@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -43,153 +43,22 @@ import {
   CheckCircle2 
 } from "lucide-react";
 import { generateId } from "@/utils/dataUtils";
-
-// Tipos de dados para o conteúdo educacional
-type ContentType = "course" | "class" | "certification" | "path";
-
-interface EducationalContent {
-  id: string;
-  title: string;
-  description: string;
-  type: ContentType;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface Course extends EducationalContent {
-  type: "course";
-  classes: string[]; // IDs das aulas associadas
-  duration: number; // duração em minutos
-}
-
-interface Class extends EducationalContent {
-  type: "class";
-  videoUrl?: string;
-  duration: number; // duração em minutos
-  materials: string[]; // links ou ids para materiais
-}
-
-interface Certification extends EducationalContent {
-  type: "certification";
-  requiredCourses: string[]; // IDs dos cursos necessários
-  maxAttempts: number;
-}
-
-interface LearningPath extends EducationalContent {
-  type: "path";
-  steps: Array<{
-    contentId: string;
-    contentType: "course" | "certification";
-    order: number;
-  }>;
-}
-
-// Dados iniciais de exemplo
-const MOCK_COURSES: Course[] = [
-  {
-    id: "course-1",
-    title: "Fundamentos de Vendas",
-    description: "Aprenda os fundamentos de vendas e técnicas de abordagem",
-    type: "course",
-    classes: ["class-1", "class-2"],
-    duration: 120,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "course-2",
-    title: "Marketing Digital Avançado",
-    description: "Estratégias avançadas de marketing digital para prospecção",
-    type: "course",
-    classes: ["class-3"],
-    duration: 180,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-const MOCK_CLASSES: Class[] = [
-  {
-    id: "class-1",
-    title: "Introdução às Técnicas de Vendas",
-    description: "Aula introdutória sobre as principais técnicas de vendas",
-    type: "class",
-    videoUrl: "https://example.com/video1",
-    duration: 45,
-    materials: ["https://example.com/material1"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "class-2",
-    title: "Abordagem e Prospecção",
-    description: "Como abordar clientes e fazer prospecção efetiva",
-    type: "class",
-    videoUrl: "https://example.com/video2",
-    duration: 60,
-    materials: ["https://example.com/material2"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "class-3",
-    title: "Estratégias de Marketing Digital",
-    description: "Estratégias modernas de marketing digital",
-    type: "class",
-    videoUrl: "https://example.com/video3",
-    duration: 90,
-    materials: ["https://example.com/material3"],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-const MOCK_CERTIFICATIONS: Certification[] = [
-  {
-    id: "cert-1",
-    title: "Certificação em Vendas",
-    description: "Certificação oficial em técnicas de vendas",
-    type: "certification",
-    requiredCourses: ["course-1"],
-    maxAttempts: 3,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-const MOCK_PATHS: LearningPath[] = [
-  {
-    id: "path-1",
-    title: "Trilha de Vendedor Profissional",
-    description: "Trilha completa para formação de vendedores profissionais",
-    type: "path",
-    steps: [
-      {
-        contentId: "course-1",
-        contentType: "course",
-        order: 1
-      },
-      {
-        contentId: "course-2",
-        contentType: "course",
-        order: 2
-      },
-      {
-        contentId: "cert-1",
-        contentType: "certification",
-        order: 3
-      }
-    ],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
+import { EducationService } from "@/services/EducationService";
+import { Certification, Class, Course, LearningPath } from "@/types/education.types";
 
 const AdminGraduation: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
-  const [classes, setClasses] = useState<Class[]>(MOCK_CLASSES);
-  const [certifications, setCertifications] = useState<Certification[]>(MOCK_CERTIFICATIONS);
-  const [paths, setPaths] = useState<LearningPath[]>(MOCK_PATHS);
+const [courses, setCourses] = useState<Course[]>([]);
+const [classes, setClasses] = useState<Class[]>([]);
+const [certifications, setCertifications] = useState<Certification[]>([]);
+const [paths, setPaths] = useState<LearningPath[]>([]);
+
+
+useEffect(() => {
+  EducationService.getCourses().then(setCourses);
+  EducationService.getClasses().then(setClasses);
+  EducationService.getCertifications().then(setCertifications);
+  EducationService.getPaths().then(setPaths);
+}, []);
 
   const [newCourse, setNewCourse] = useState<Partial<Course>>({
     title: "",
@@ -201,7 +70,7 @@ const AdminGraduation: React.FC = () => {
   const [newClass, setNewClass] = useState<Partial<Class>>({
     title: "",
     description: "",
-    videoUrl: "",
+    video_url: "",
     duration: 0,
     materials: []
   });
@@ -209,8 +78,8 @@ const AdminGraduation: React.FC = () => {
   const [newCertification, setNewCertification] = useState<Partial<Certification>>({
     title: "",
     description: "",
-    requiredCourses: [],
-    maxAttempts: 3
+    required_courses: [],
+    max_attempts: 3
   });
 
   const [newPath, setNewPath] = useState<Partial<LearningPath>>({
@@ -230,38 +99,31 @@ const AdminGraduation: React.FC = () => {
   const [pathDialogOpen, setPathDialogOpen] = useState(false);
 
   // Funções para gerenciar cursos
-  const handleAddCourse = () => {
-    if (!newCourse.title || !newCourse.description) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+const handleAddCourse = async () => {
+  if (!newCourse.title || !newCourse.description) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
 
+  try {
     if (isEditingCourse && newCourse.id) {
-      setCourses(courses.map(course => 
-        course.id === newCourse.id ? { ...course, ...newCourse, updatedAt: new Date() } as Course : course
-      ));
+      const updated = await EducationService.updateCourse(newCourse.id, newCourse);
+      setCourses(prev => prev.map(c => c.id === updated.id ? updated : c));
       toast.success("Curso atualizado com sucesso!");
     } else {
-      const course: Course = {
-        ...newCourse as Omit<Course, "id" | "type" | "createdAt" | "updatedAt">,
-        id: generateId(),
-        type: "course",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      setCourses([...courses, course]);
+      const created = await EducationService.createCourse(newCourse);
+      setCourses(prev => [...prev, created]);
       toast.success("Curso adicionado com sucesso!");
     }
-    
-    setNewCourse({
-      title: "",
-      description: "",
-      classes: [],
-      duration: 0
-    });
+
+    setNewCourse({ title: "", description: "", classes: [], duration: 0 });
     setCourseDialogOpen(false);
     setIsEditingCourse(false);
-  };
+  } catch (err) {
+    toast.error("Erro ao salvar curso");
+  }
+};
+
 
   const handleEditCourse = (course: Course) => {
     setNewCourse(course);
@@ -269,46 +131,43 @@ const AdminGraduation: React.FC = () => {
     setCourseDialogOpen(true);
   };
 
-  const handleDeleteCourse = (id: string) => {
-    setCourses(courses.filter(course => course.id !== id));
+const handleDeleteCourse = async (id: string) => {
+  try {
+    await EducationService.deleteCourse(id);
+    setCourses(prev => prev.filter(c => c.id !== id));
     toast.success("Curso excluído com sucesso!");
-  };
+  } catch (err) {
+    toast.error("Erro ao excluir curso");
+  }
+};
+
 
   // Funções para gerenciar aulas
-  const handleAddClass = () => {
-    if (!newClass.title || !newClass.description) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+const handleAddClass = async () => {
+  if (!newClass.title || !newClass.description) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
 
+  try {
     if (isEditingClass && newClass.id) {
-      setClasses(classes.map(cls => 
-        cls.id === newClass.id ? { ...cls, ...newClass, updatedAt: new Date() } as Class : cls
-      ));
+      const updated = await EducationService.updateClass(newClass.id, newClass);
+      setClasses(prev => prev.map(c => c.id === updated.id ? updated : c));
       toast.success("Aula atualizada com sucesso!");
     } else {
-      const cls: Class = {
-        ...newClass as Omit<Class, "id" | "type" | "createdAt" | "updatedAt">,
-        id: generateId(),
-        type: "class",
-        materials: newClass.materials || [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      setClasses([...classes, cls]);
+      const created = await EducationService.createClass(newClass);
+      setClasses(prev => [...prev, created]);
       toast.success("Aula adicionada com sucesso!");
     }
-    
-    setNewClass({
-      title: "",
-      description: "",
-      videoUrl: "",
-      duration: 0,
-      materials: []
-    });
+
+    setNewClass({ title: "", description: "", video_url: "", duration: 0, materials: [] });
     setClassDialogOpen(false);
     setIsEditingClass(false);
-  };
+  } catch (err) {
+    toast.error("Erro ao salvar aula");
+  }
+};
+
 
   const handleEditClass = (cls: Class) => {
     setNewClass(cls);
@@ -322,76 +181,71 @@ const AdminGraduation: React.FC = () => {
   };
 
   // Funções para gerenciar certificações
-  const handleAddCertification = () => {
-    if (!newCertification.title || !newCertification.description) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+const handleAddCertification = async () => {
+  if (!newCertification.title || !newCertification.description) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
 
+  try {
     if (isEditingCertification && newCertification.id) {
-      setCertifications(certifications.map(cert => 
-        cert.id === newCertification.id ? { ...cert, ...newCertification, updatedAt: new Date() } as Certification : cert
-      ));
+      const updated = await EducationService.updateCertification(newCertification.id, newCertification);
+      setCertifications(prev => prev.map(cert => cert.id === updated.id ? updated : cert));
       toast.success("Certificação atualizada com sucesso!");
     } else {
-      const certification: Certification = {
-        ...newCertification as Omit<Certification, "id" | "type" | "createdAt" | "updatedAt">,
-        id: generateId(),
-        type: "certification",
-        requiredCourses: newCertification.requiredCourses || [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      setCertifications([...certifications, certification]);
+      const created = await EducationService.createCertification(newCertification);
+      setCertifications(prev => [...prev, created]);
       toast.success("Certificação adicionada com sucesso!");
     }
-    
+
     setNewCertification({
       title: "",
       description: "",
-      requiredCourses: [],
-      maxAttempts: 3
+      required_courses: [],
+      max_attempts: 3
     });
     setCertificationDialogOpen(false);
     setIsEditingCertification(false);
-  };
+  } catch (error) {
+    toast.error("Erro ao salvar certificação");
+  }
+};
 
-  const handleEditCertification = (cert: Certification) => {
-    setNewCertification(cert);
-    setIsEditingCertification(true);
-    setCertificationDialogOpen(true);
-  };
+const handleEditCertification = (cert: Certification) => {
+  setNewCertification(cert);
+  setIsEditingCertification(true);
+  setCertificationDialogOpen(true);
+};
 
-  const handleDeleteCertification = (id: string) => {
-    setCertifications(certifications.filter(cert => cert.id !== id));
+const handleDeleteCertification = async (id: string) => {
+  try {
+    await EducationService.deleteCertification(id);
+    setCertifications(prev => prev.filter(cert => cert.id !== id));
     toast.success("Certificação excluída com sucesso!");
-  };
+  } catch (error) {
+    toast.error("Erro ao excluir certificação");
+  }
+};
+
 
   // Funções para gerenciar trilhas
-  const handleAddPath = () => {
-    if (!newPath.title || !newPath.description) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+const handleAddPath = async () => {
+  if (!newPath.title || !newPath.description) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
 
+  try {
     if (isEditingPath && newPath.id) {
-      setPaths(paths.map(path => 
-        path.id === newPath.id ? { ...path, ...newPath, updatedAt: new Date() } as LearningPath : path
-      ));
+      const updated = await EducationService.updatePath(newPath.id, newPath);
+      setPaths(prev => prev.map(path => path.id === updated.id ? updated : path));
       toast.success("Trilha atualizada com sucesso!");
     } else {
-      const path: LearningPath = {
-        ...newPath as Omit<LearningPath, "id" | "type" | "createdAt" | "updatedAt">,
-        id: generateId(),
-        type: "path",
-        steps: newPath.steps || [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      setPaths([...paths, path]);
+      const created = await EducationService.createPath(newPath);
+      setPaths(prev => [...prev, created]);
       toast.success("Trilha adicionada com sucesso!");
     }
-    
+
     setNewPath({
       title: "",
       description: "",
@@ -399,18 +253,26 @@ const AdminGraduation: React.FC = () => {
     });
     setPathDialogOpen(false);
     setIsEditingPath(false);
-  };
+  } catch (error) {
+    toast.error("Erro ao salvar trilha");
+  }
+};
 
-  const handleEditPath = (path: LearningPath) => {
-    setNewPath(path);
-    setIsEditingPath(true);
-    setPathDialogOpen(true);
-  };
+const handleEditPath = (path: LearningPath) => {
+  setNewPath(path);
+  setIsEditingPath(true);
+  setPathDialogOpen(true);
+};
 
-  const handleDeletePath = (id: string) => {
-    setPaths(paths.filter(path => path.id !== id));
+const handleDeletePath = async (id: string) => {
+  try {
+    await EducationService.deletePath(id);
+    setPaths(prev => prev.filter(path => path.id !== id));
     toast.success("Trilha excluída com sucesso!");
-  };
+  } catch (error) {
+    toast.error("Erro ao excluir trilha");
+  }
+};
 
   // Helper para obter nomes de cursos para exibição em trilhas e certificações
   const getCourseTitle = (courseId: string) => {
@@ -566,7 +428,7 @@ const AdminGraduation: React.FC = () => {
                           <TableCell className="font-medium">{course.title}</TableCell>
                           <TableCell className="max-w-xs truncate">{course.description}</TableCell>
                           <TableCell>{course.duration} min</TableCell>
-                          <TableCell>{course.classes.length} aulas</TableCell>
+                          <TableCell>{(course.classes ?? []).length} aulas</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course)}>
@@ -600,7 +462,7 @@ const AdminGraduation: React.FC = () => {
                     setNewClass({
                       title: "",
                       description: "",
-                      videoUrl: "",
+                      video_url: "",
                       duration: 0,
                       materials: []
                     });
@@ -639,12 +501,12 @@ const AdminGraduation: React.FC = () => {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="videoUrl">URL do Vídeo</Label>
+                      <Label htmlFor="video_url">URL do Vídeo</Label>
                       <Input
-                        id="videoUrl"
+                        id="video_url"
                         placeholder="URL do vídeo da aula"
-                        value={newClass.videoUrl}
-                        onChange={(e) => setNewClass({...newClass, videoUrl: e.target.value})}
+                        value={newClass.video_url}
+                        onChange={(e) => setNewClass({...newClass, video_url: e.target.value})}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -707,9 +569,9 @@ const AdminGraduation: React.FC = () => {
                           <TableCell className="max-w-xs truncate">{cls.description}</TableCell>
                           <TableCell>{cls.duration} min</TableCell>
                           <TableCell>
-                            {cls.videoUrl ? 
+                            {cls.video_url ? 
                               <a 
-                                href={cls.videoUrl} 
+                                href={cls.video_url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline"
@@ -758,8 +620,8 @@ const AdminGraduation: React.FC = () => {
                     setNewCertification({
                       title: "",
                       description: "",
-                      requiredCourses: [],
-                      maxAttempts: 3
+                      required_courses: [],
+                      max_attempts: 3
                     });
                     setIsEditingCertification(false);
                   }}>
@@ -796,15 +658,15 @@ const AdminGraduation: React.FC = () => {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="maxAttempts">Número Máximo de Tentativas</Label>
+                      <Label htmlFor="max_attempts">Número Máximo de Tentativas</Label>
                       <Input
-                        id="maxAttempts"
+                        id="max_attempts"
                         type="number"
                         placeholder="Número máximo de tentativas"
-                        value={newCertification.maxAttempts}
+                        value={newCertification.max_attempts}
                         onChange={(e) => setNewCertification({
                           ...newCertification, 
-                          maxAttempts: parseInt(e.target.value) || 0
+                          max_attempts: parseInt(e.target.value) || 0
                         })}
                       />
                     </div>
@@ -819,12 +681,12 @@ const AdminGraduation: React.FC = () => {
                               <input
                                 type="checkbox"
                                 id={`cert-course-${course.id}`}
-                                checked={(newCertification.requiredCourses || []).includes(course.id)}
+                                checked={(newCertification.required_courses || []).includes(course.id)}
                                 onChange={(e) => {
                                   const updatedCourses = e.target.checked
-                                    ? [...(newCertification.requiredCourses || []), course.id]
-                                    : (newCertification.requiredCourses || []).filter(id => id !== course.id);
-                                  setNewCertification({...newCertification, requiredCourses: updatedCourses});
+                                    ? [...(newCertification.required_courses || []), course.id]
+                                    : (newCertification.required_courses || []).filter(id => id !== course.id);
+                                  setNewCertification({...newCertification, required_courses: updatedCourses});
                                 }}
                               />
                               <label htmlFor={`cert-course-${course.id}`} className="text-sm">{course.title}</label>
@@ -865,11 +727,11 @@ const AdminGraduation: React.FC = () => {
                         <TableRow key={cert.id}>
                           <TableCell className="font-medium">{cert.title}</TableCell>
                           <TableCell className="max-w-xs truncate">{cert.description}</TableCell>
-                          <TableCell>{cert.maxAttempts}</TableCell>
+                          <TableCell>{cert.max_attempts}</TableCell>
                           <TableCell>
-                            {cert.requiredCourses.length > 0 ? (
+                            {cert.required_courses.length > 0 ? (
                               <ul className="list-disc list-inside">
-                                {cert.requiredCourses.map(courseId => (
+                                {cert.required_courses.map(courseId => (
                                   <li key={courseId} className="text-sm">{getCourseTitle(courseId)}</li>
                                 ))}
                               </ul>
