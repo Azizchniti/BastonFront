@@ -238,10 +238,12 @@ const handleAddPath = async () => {
   try {
     if (isEditingPath && newPath.id) {
       const updated = await EducationService.updatePath(newPath.id, newPath);
+      console.log("Updated path", updated); 
       setPaths(prev => prev.map(path => path.id === updated.id ? updated : path));
       toast.success("Trilha atualizada com sucesso!");
     } else {
       const created = await EducationService.createPath(newPath);
+      console.log("Created path", created); 
       setPaths(prev => [...prev, created]);
       toast.success("Trilha adicionada com sucesso!");
     }

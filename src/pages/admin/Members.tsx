@@ -88,7 +88,7 @@ const [users, setUsers] = useState<profile[]>([]);
     direction: 'ascending' | 'descending';
   }>({ key: null, direction: 'ascending' });
 
-useEffect(() => {
+
   const loadMembersAndUsers = async () => {
     setLoading(true); // optional: only set once
     try {
@@ -105,7 +105,7 @@ useEffect(() => {
       setLoading(false);
     }
   };
-
+useEffect(() => {
   loadMembersAndUsers();
 }, []);
 const admins = users.filter(u => u.role !== "member");
@@ -129,7 +129,7 @@ const admins = users.filter(u => u.role !== "member");
   const handleApprove = async (id: string) => {
     try {
       await MemberService.approveMember(id);
-      toast.success("Membro aprovado com sucesso");
+       toast.success("Membro aprovado com sucesso", { duration: 4000 });
       loadPendingMembers(); // refresh list
     } catch (error) {
       toast.error("Erro ao aprovar membro");
@@ -139,7 +139,7 @@ const admins = users.filter(u => u.role !== "member");
   const handleReject = async (id: string) => {
     try {
       await MemberService.rejectMember(id);
-      toast.success("Membro rejeitado com sucesso");
+      toast.success("Membro rejeitado com sucesso", { duration: 4000 });
       loadPendingMembers(); // refresh list
     } catch (error) {
       toast.error("Erro ao rejeitar membro");
@@ -206,6 +206,7 @@ const [formData, setFormData] = useState({
   // Funções para lidar com os formulários
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+      console.log(`Updating ${name}: ${value}`);
     setFormData({
       ...formData,
       [name]: value
@@ -240,6 +241,8 @@ const handleAddMember = async () => {
     toast.error("Preencha todos os campos obrigatórios");
     return;
   }
+  console.log("Submitting formData:", formData);
+
 
   try {
     const newUser = await signUp(
@@ -257,6 +260,7 @@ const handleAddMember = async () => {
       toast.success("Membro criado com sucesso. Verifique o email de ativação.");
       resetForm();
       setAddDialogOpen(false);
+        await loadPendingMembers();
     } else {
       toast.error("Erro ao criar membro. Verifique os dados e tente novamente.");
     }
@@ -268,45 +272,56 @@ const handleAddMember = async () => {
 
 
   // Editar um membro existente
-  const handleEditMember = () => {
-    if (!selectedMember) return;
+  const handleEditMember = async () => {
+  if (!selectedMember) return;
+
+  if (!formData.first_name || !formData.last_name || !formData.cpf || !formData.phone) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
+
+  try {
+    // Await update to complete
+    await updateMember(selectedMember.id, {
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      cpf: formData.cpf,
+      phone: formData.phone,
+      grade: formData.grade
+    });
+
+    toast.success("Membro atualizado com sucesso");
     
-    // Validate required fields
-    if (!formData.first_name || !formData.last_name || !formData.cpf || !formData.phone) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    
-    try {
-      updateMember(selectedMember.id, {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        cpf: formData.cpf,
-        phone: formData.phone,
-        grade: formData.grade
-       
-      });
-      console.log("Updating member ID:", selectedMember.id);
-      setEditDialogOpen(false);
-      setSelectedMember(null);
-      resetForm();
-    } catch (error) {
-      toast.error("Erro ao atualizar membro");
-    }
-  };
+    // Refresh the members list (you need to expose this function outside useEffect)
+    await loadMembersAndUsers();
+
+    setEditDialogOpen(false);
+    setSelectedMember(null);
+    resetForm();
+  } catch (error) {
+    toast.error("Erro ao atualizar membro");
+    console.error(error);
+  }
+};
 
   // Excluir um membro
-  const handleDeleteMember = () => {
-    if (!selectedMember) return;
-    
-    try {
-      deleteMember(selectedMember.id);
-      setDeleteDialogOpen(false);
-      setSelectedMember(null);
-    } catch (error) {
-      toast.error("Erro ao excluir membro");
-    }
-  };
+const handleDeleteMember = async () => {
+  if (!selectedMember) return;
+
+  try {
+    await deleteMember(selectedMember.id);  // wait for deletion
+    toast.success("Membro excluído com sucesso");
+
+    await loadMembersAndUsers(); // refresh the list
+
+    setDeleteDialogOpen(false);
+    setSelectedMember(null);
+  } catch (error) {
+    toast.error("Erro ao excluir membro");
+    console.error(error);
+  }
+};
+
 
   // Preparar para editar um membro
   const handleEditDialogOpen = (member: Member) => {

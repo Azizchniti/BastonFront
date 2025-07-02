@@ -72,7 +72,7 @@ const MemberGraduation: React.FC = () => {
   const [newClass, setNewClass] = useState<Partial<Class>>({
     title: "",
     description: "",
-    videoUrl: "",
+    video_url: "",
     duration: 0,
     materials: []
   });
@@ -80,8 +80,8 @@ const MemberGraduation: React.FC = () => {
   const [newCertification, setNewCertification] = useState<Partial<Certification>>({
     title: "",
     description: "",
-    requiredCourses: [],
-    maxAttempts: 3
+    required_courses: [],
+    max_attempts: 3
   });
 
   const [newPath, setNewPath] = useState<Partial<LearningPath>>({
@@ -161,7 +161,7 @@ const MemberGraduation: React.FC = () => {
       const cls: Class = {
         ...newClass as Omit<Class, "id" | "type" | "createdAt" | "updatedAt">,
         id: generateId(),
-        type: "class",
+       
         materials: newClass.materials || [],
         createdAt: new Date(),
         updatedAt: new Date()
@@ -173,7 +173,7 @@ const MemberGraduation: React.FC = () => {
     setNewClass({
       title: "",
       description: "",
-      videoUrl: "",
+      video_url: "",
       duration: 0,
       materials: []
     });
@@ -208,8 +208,7 @@ const MemberGraduation: React.FC = () => {
       const certification: Certification = {
         ...newCertification as Omit<Certification, "id" | "type" | "createdAt" | "updatedAt">,
         id: generateId(),
-        type: "certification",
-        requiredCourses: newCertification.requiredCourses || [],
+        required_courses: newCertification.required_courses || [],
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -220,8 +219,8 @@ const MemberGraduation: React.FC = () => {
     setNewCertification({
       title: "",
       description: "",
-      requiredCourses: [],
-      maxAttempts: 3
+      required_courses: [],
+      max_attempts: 3
     });
     setCertificationDialogOpen(false);
     setIsEditingCertification(false);
@@ -239,30 +238,35 @@ const MemberGraduation: React.FC = () => {
   };
 
   // Funções para gerenciar trilhas
-  const handleAddPath = () => {
-    if (!newPath.title || !newPath.description) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+const handleAddPath = async () => {
+  if (!newPath.title || !newPath.description) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
 
+  try {
     if (isEditingPath && newPath.id) {
-      setPaths(paths.map(path => 
-        path.id === newPath.id ? { ...path, ...newPath, updatedAt: new Date() } as LearningPath : path
+      const updatedPath = {
+        ...newPath,
+        updatedAt: new Date()
+      };
+
+      await EducationService.updatePath(newPath.id, updatedPath);
+      setPaths(paths.map(path =>
+        path.id === newPath.id ? updatedPath as LearningPath : path
       ));
       toast.success("Trilha atualizada com sucesso!");
     } else {
-      const path: LearningPath = {
-        ...newPath as Omit<LearningPath, "id" | "type" | "createdAt" | "updatedAt">,
-        id: generateId(),
-        type: "path",
-        steps: newPath.steps || [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      setPaths([...paths, path]);
+      const createdPath = await EducationService.createPath({
+        ...newPath,
+        steps: newPath.steps || []
+      });
+
+      setPaths([...paths, createdPath]);
       toast.success("Trilha adicionada com sucesso!");
     }
-    
+
+    // Reset form
     setNewPath({
       title: "",
       description: "",
@@ -270,7 +274,13 @@ const MemberGraduation: React.FC = () => {
     });
     setPathDialogOpen(false);
     setIsEditingPath(false);
-  };
+
+  } catch (error: any) {
+    console.error("Erro ao salvar trilha:", error);
+    toast.error("Erro ao salvar trilha");
+  }
+};
+
 
   const handleEditPath = (path: LearningPath) => {
     setNewPath(path);
@@ -421,7 +431,7 @@ const MemberGraduation: React.FC = () => {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Duração</TableHead>
                       <TableHead>Aulas</TableHead>
-                      <TableHead className="w-[120px]">Ações</TableHead>
+                    
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -438,18 +448,7 @@ const MemberGraduation: React.FC = () => {
                           <TableCell className="max-w-xs truncate">{course.description}</TableCell>
                           <TableCell>{course.duration} min</TableCell>
                           <TableCell>{course.classes.length} aulas</TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {/* <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course)}>
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Editar</span>
-                              </Button> */}
-                              {/* <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Excluir</span>
-                              </Button> */}
-                            </div>
-                          </TableCell>
+                        
                         </TableRow>
                       ))
                     )}
@@ -514,8 +513,8 @@ const MemberGraduation: React.FC = () => {
                       <Input
                         id="videoUrl"
                         placeholder="URL do vídeo da aula"
-                        value={newClass.videoUrl}
-                        onChange={(e) => setNewClass({...newClass, videoUrl: e.target.value})}
+                        value={newClass.video_url}
+                        onChange={(e) => setNewClass({...newClass, video_url: e.target.value})}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -561,7 +560,7 @@ const MemberGraduation: React.FC = () => {
                       <TableHead>Duração</TableHead>
                       <TableHead>Vídeo</TableHead>
                       <TableHead>Materiais</TableHead>
-                      <TableHead className="w-[120px]">Ações</TableHead>
+                  
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -578,9 +577,9 @@ const MemberGraduation: React.FC = () => {
                           <TableCell className="max-w-xs truncate">{cls.description}</TableCell>
                           <TableCell>{cls.duration} min</TableCell>
                           <TableCell>
-                            {cls.videoUrl ? 
+                            {cls.video_url ? 
                               <a 
-                                href={cls.videoUrl} 
+                                href={cls.video_url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline"
@@ -596,18 +595,7 @@ const MemberGraduation: React.FC = () => {
                               "Sem materiais"
                             }
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {/* <Button variant="ghost" size="icon" onClick={() => handleEditClass(cls)}>
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Editar</span>
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteClass(cls.id)}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Excluir</span>
-                              </Button> */}
-                            </div>
-                          </TableCell>
+                  
                         </TableRow>
                       ))
                     )}
@@ -672,10 +660,10 @@ const MemberGraduation: React.FC = () => {
                         id="maxAttempts"
                         type="number"
                         placeholder="Número máximo de tentativas"
-                        value={newCertification.maxAttempts}
+                        value={newCertification.max_attempts}
                         onChange={(e) => setNewCertification({
                           ...newCertification, 
-                          maxAttempts: parseInt(e.target.value) || 0
+                          max_attempts: parseInt(e.target.value) || 0
                         })}
                       />
                     </div>
@@ -690,12 +678,12 @@ const MemberGraduation: React.FC = () => {
                               <input
                                 type="checkbox"
                                 id={`cert-course-${course.id}`}
-                                checked={(newCertification.requiredCourses || []).includes(course.id)}
+                                checked={(newCertification.required_courses || []).includes(course.id)}
                                 onChange={(e) => {
                                   const updatedCourses = e.target.checked
-                                    ? [...(newCertification.requiredCourses || []), course.id]
-                                    : (newCertification.requiredCourses || []).filter(id => id !== course.id);
-                                  setNewCertification({...newCertification, requiredCourses: updatedCourses});
+                                    ? [...(newCertification.required_courses || []), course.id]
+                                    : (newCertification.required_courses || []).filter(id => id !== course.id);
+                                  setNewCertification({...newCertification, required_courses: updatedCourses});
                                 }}
                               />
                               <label htmlFor={`cert-course-${course.id}`} className="text-sm">{course.title}</label>
@@ -721,7 +709,7 @@ const MemberGraduation: React.FC = () => {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Tentativas Máx.</TableHead>
                       <TableHead>Cursos Necessários</TableHead>
-                      <TableHead className="w-[120px]">Ações</TableHead>
+                 
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -736,11 +724,11 @@ const MemberGraduation: React.FC = () => {
                         <TableRow key={cert.id}>
                           <TableCell className="font-medium">{cert.title}</TableCell>
                           <TableCell className="max-w-xs truncate">{cert.description}</TableCell>
-                          <TableCell>{cert.maxAttempts}</TableCell>
+                          <TableCell>{cert.max_attempts}</TableCell>
                           <TableCell>
-                            {cert.requiredCourses.length > 0 ? (
+                            {cert.required_courses.length > 0 ? (
                               <ul className="list-disc list-inside">
-                                {cert.requiredCourses.map(courseId => (
+                                {cert.required_courses.map(courseId => (
                                   <li key={courseId} className="text-sm">{getCourseTitle(courseId)}</li>
                                 ))}
                               </ul>
@@ -748,18 +736,7 @@ const MemberGraduation: React.FC = () => {
                               <span className="text-muted-foreground">Nenhum curso necessário</span>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {/* <Button variant="ghost" size="icon" onClick={() => handleEditCertification(cert)}>
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Editar</span>
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteCertification(cert.id)}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Excluir</span>
-                              </Button> */}
-                            </div>
-                          </TableCell>
+      
                         </TableRow>
                       ))
                     )}

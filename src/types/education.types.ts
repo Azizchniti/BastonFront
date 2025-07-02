@@ -16,7 +16,7 @@ export interface Course  {
   type: 'course';
   classes: string[];
   duration: number;
-createdAt: Date;
+  createdAt: Date;
   updatedAt: Date;
 }
 
@@ -27,6 +27,8 @@ export interface Class {
   duration: number;
   materials: string[];
   description: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Certification {
@@ -35,10 +37,14 @@ export interface Certification {
   description: string;
   required_courses: string[];
   max_attempts: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface LearningPath extends EducationalContent {
-  type: 'path';
+export interface LearningPath  {
+  id: string;
+  title: string;
+  description: string;
   steps: {
     contentId: string;
     contentType: 'course' | 'certification';

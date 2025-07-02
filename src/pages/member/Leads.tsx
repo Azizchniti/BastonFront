@@ -474,7 +474,7 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Observaçaos: </FormLabel>
+                          <FormLabel>Observações: </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Digite as observações sobre este lead..."
