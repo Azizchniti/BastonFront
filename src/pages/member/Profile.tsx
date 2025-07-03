@@ -138,12 +138,16 @@ useEffect(() => {
   </CardHeader>
   <CardContent className="text-center">
     {editMode ? (
-      <input
-        type="text"
-        value={editedCPF}
-        onChange={(e) => setEditedCPF(e.target.value)}
-         className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-      />
+     <div className="flex justify-center">
+        <input
+          type="text"
+          value={editedCPF}
+          onChange={(e) => setEditedCPF(e.target.value)}
+          placeholder="Digite seu CPF"
+          className="text-center w-full max-w-xs px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
+        />
+  </div>
+
     ) : (
       <p className="text-lg font-semibold">{member.cpf}</p>
     )}
@@ -157,12 +161,16 @@ useEffect(() => {
   </CardHeader>
   <CardContent className="text-center">
     {editMode ? (
-      <input
-        type="text"
-        value={editedPhone}
-        onChange={(e) => setEditedPhone(e.target.value)}
-        className="w-full border px-2 py-1 rounded-md"
-      />
+      <div className="flex justify-center">
+        <input
+          type="text"
+          value={editedPhone}
+          onChange={(e) => setEditedPhone(e.target.value)}
+          placeholder="Digite seu telefone"
+          className="text-center w-full max-w-xs px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
+        />
+    </div>
+
     ) : (
       <p className="text-lg font-semibold">{member.phone}</p>
     )}
@@ -245,7 +253,7 @@ useEffect(() => {
       onClick={() => setEditMode(true)}
       className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
     >
-      ✏️ Editar Dados
+       Editar Dados
     </button>
   )}
 </div>
