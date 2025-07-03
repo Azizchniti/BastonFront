@@ -298,6 +298,21 @@ const handleAddPath = async () => {
     const course = courses.find(c => c.id === courseId);
     return course ? course.title : "Curso não encontrado";
   };
+  function getEmbedUrl(url: string): string {
+  if (url.includes("youtube.com/watch?v=")) {
+    const videoId = url.split("v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  } else if (url.includes("youtu.be/")) {
+    const videoId = url.split("youtu.be/")[1];
+    return `https://www.youtube.com/embed/${videoId}`;
+  } else if (url.includes("vimeo.com/")) {
+    const videoId = url.split("vimeo.com/")[1];
+    return `https://player.vimeo.com/video/${videoId}`;
+  } else {
+    return url; // Direct video URL like .mp4 or other
+  }
+}
+
 
   return (
     <div className="space-y-6">
@@ -576,19 +591,22 @@ const handleAddPath = async () => {
                           <TableCell className="font-medium">{cls.title}</TableCell>
                           <TableCell className="max-w-xs truncate">{cls.description}</TableCell>
                           <TableCell>{cls.duration} min</TableCell>
-                          <TableCell>
-                            {cls.video_url ? 
-                              <a 
-                                href={cls.video_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                Ver vídeo
-                              </a> : 
-                              "Sem vídeo"
-                            }
-                          </TableCell>
+                         <TableCell className="max-w-sm">
+  {cls.video_url ? (
+    <div className="aspect-video w-full">
+      <iframe
+        src={getEmbedUrl(cls.video_url)}
+        title="Vídeo da aula"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="w-full h-full rounded-md"
+      ></iframe>
+    </div>
+  ) : (
+    "Sem vídeo"
+  )}
+</TableCell>
+
                           <TableCell>
                             {cls.materials.length > 0 ? 
                               `${cls.materials.length} material(is)` : 

@@ -22,6 +22,10 @@ const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [member, setCurrentMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [editMode, setEditMode] = useState(false);
+const [editedCPF, setEditedCPF] = useState('');
+const [editedPhone, setEditedPhone] = useState('');
+
 console.log("user.id:", user?.id);
 useEffect(() => {
   const fetchMember = async () => {
@@ -29,6 +33,9 @@ useEffect(() => {
       try {
         const memberData = await MemberService.getMemberById(user.id);
         setCurrentMember(memberData);
+        setEditedCPF(memberData.cpf || '');
+        setEditedPhone(memberData.phone || '');
+
       } catch (err) {
         console.error("Failed to fetch member:", err);
       } finally {
@@ -125,24 +132,43 @@ useEffect(() => {
  {/* Info Grid */}
 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
   <Card>
-    <CardHeader className="flex justify-between items-center pb-2">
-      <CardTitle className="text-sm font-medium">CPF</CardTitle>
-      <Hash className="w-4 h-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent className="text-center">
+  <CardHeader className="flex justify-between items-center pb-2">
+    <CardTitle className="text-sm font-medium">CPF</CardTitle>
+    <Hash className="w-4 h-4 text-muted-foreground" />
+  </CardHeader>
+  <CardContent className="text-center">
+    {editMode ? (
+      <input
+        type="text"
+        value={editedCPF}
+        onChange={(e) => setEditedCPF(e.target.value)}
+         className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+      />
+    ) : (
       <p className="text-lg font-semibold">{member.cpf}</p>
-    </CardContent>
-  </Card>
+    )}
+  </CardContent>
+</Card>
 
-  <Card>
-    <CardHeader className="flex justify-between items-center pb-2">
-      <CardTitle className="text-sm font-medium">Telefone</CardTitle>
-      <Phone className="w-4 h-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent className="text-center">
+<Card>
+  <CardHeader className="flex justify-between items-center pb-2">
+    <CardTitle className="text-sm font-medium">Telefone</CardTitle>
+    <Phone className="w-4 h-4 text-muted-foreground" />
+  </CardHeader>
+  <CardContent className="text-center">
+    {editMode ? (
+      <input
+        type="text"
+        value={editedPhone}
+        onChange={(e) => setEditedPhone(e.target.value)}
+        className="w-full border px-2 py-1 rounded-md"
+      />
+    ) : (
       <p className="text-lg font-semibold">{member.phone}</p>
-    </CardContent>
-  </Card>
+    )}
+  </CardContent>
+</Card>
+
 </div>
 
 {/* Stats Grid */}
@@ -181,6 +207,49 @@ useEffect(() => {
     </CardContent>
   </Card>
 </div>
+<div className="flex justify-end mt-4 gap-2">
+  {editMode ? (
+    <>
+      <button
+        onClick={async () => {
+          try {
+            const updated = await MemberService.updateMember(member.id, {
+              cpf: editedCPF,
+              phone: editedPhone,
+            });
+            toast.success("Dados atualizados com sucesso!");
+            setCurrentMember(updated);
+            setEditMode(false);
+          } catch (error) {
+            toast.error("Erro ao atualizar dados.");
+            console.error(error);
+          }
+        }}
+        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
+      >
+        💾 Salvar
+      </button>
+      <button
+        onClick={() => {
+          setEditedCPF(member.cpf);
+          setEditedPhone(member.phone);
+          setEditMode(false);
+        }}
+        className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition"
+      >
+        ❌ Cancelar
+      </button>
+    </>
+  ) : (
+    <button
+      onClick={() => setEditMode(true)}
+      className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
+    >
+      ✏️ Editar Dados
+    </button>
+  )}
+</div>
+
 
     </div>
   );
