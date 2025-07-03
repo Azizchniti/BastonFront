@@ -13,7 +13,6 @@ export interface Course  {
    id: string;
   title: string;
   description: string;
-  type: 'course';
   classes: string[];
   duration: number;
   createdAt: Date;

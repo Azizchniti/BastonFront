@@ -251,7 +251,7 @@ useEffect(() => {
   ) : (
     <button
       onClick={() => setEditMode(true)}
-      className="inline-flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
+      className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
     >
        Editar Dados
     </button>

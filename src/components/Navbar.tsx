@@ -41,7 +41,13 @@ const Navbar: React.FC<{
   } = useAuth();
   
   return <div className="sticky top-0 z-10 glass border-b border-border/40 backdrop-blur-md">
-      <div className="container flex items-center justify-between h-16 mx-auto max-w-7xl px-4">
+      <div
+          className={cn(
+            "flex items-center justify-between h-16 w-full px-4 transition-all duration-300",
+            sidebarCollapsed ? "md:pl-20" : "md:pl-72"
+          )}
+        >
+
         <div className="flex items-center gap-4">
          
           {onMenuToggle && <Button variant="ghost" size="icon" onClick={onMenuToggle} className="md:hidden">
@@ -49,9 +55,8 @@ const Navbar: React.FC<{
             </Button>}
           
           <Link to="/" className="flex items-center gap-2">
-          
-              
-                            <img
+
+                  <img
                   src="/logo_hori.webp"
                   alt="Foco Hub Icon"
                   className="w-40 h-10 object-contain"

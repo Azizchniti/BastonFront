@@ -116,7 +116,7 @@ const MemberGraduation: React.FC = () => {
       const course: Course = {
         ...newCourse as Omit<Course, "id" | "type" | "createdAt" | "updatedAt">,
         id: generateId(),
-        type: "course",
+       
         createdAt: new Date(),
         updatedAt: new Date()
       };
