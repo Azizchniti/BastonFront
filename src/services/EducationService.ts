@@ -96,6 +96,11 @@ export const EducationService = {
     const res = await axios.get(`${BASE_URL}/classes/${id}`);
     return res.data;
   },
+  async getClassesByIds(ids: string[]): Promise<Class[]> {
+  const res = await axios.post(`${BASE_URL}/classes/by-ids`, { ids });
+  return res.data;
+}
+,
 
   // === CERTIFICATIONS ===
   async getCertificationById(id: string): Promise<Certification> {

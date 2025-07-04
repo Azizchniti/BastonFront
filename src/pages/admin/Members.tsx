@@ -306,21 +306,28 @@ const handleAddMember = async () => {
 
   // Excluir um membro
 const handleDeleteMember = async () => {
-  if (!selectedMember) return;
+  if (!selectedMember && !selectedUserId) return;
 
   try {
-    await deleteMember(selectedMember.id);  // wait for deletion
-    toast.success("Membro excluído com sucesso");
+    if (selectedMember) {
+      await UserService.deleteUser(selectedMember.id);
+      toast.success("Membro excluído com sucesso");
+    } else if (selectedUserId) {
+      await UserService.deleteUser(selectedUserId);
+      toast.success("Administrador excluído com sucesso");
+    }
 
-    await loadMembersAndUsers(); // refresh the list
-
+    await loadMembersAndUsers(); // Refresh both lists
     setDeleteDialogOpen(false);
     setSelectedMember(null);
+    setSelectedUserId(null);
   } catch (error) {
-    toast.error("Erro ao excluir membro");
+    console.log("Trying to delete ID:", selectedMember?.id || selectedUserId);
+    toast.error("Erro ao excluir usuário");
     console.error(error);
   }
 };
+
 
 
   // Preparar para editar um membro

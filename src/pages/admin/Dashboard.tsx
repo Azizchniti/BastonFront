@@ -112,7 +112,7 @@ const AdminDashboard: React.FC = () => {
 
   const gradeChartData = [
     // { name: "Beginner", value: memberGradeData. || 0, color: "#94a3b8" },
-    { name: "Standard", value: memberGradeData.silver || 0, color: "#3b82f6" },
+    { name: "Silver", value: memberGradeData.silver || 0, color: "#3b82f6" },
     { name: "Gold", value: memberGradeData.gold || 0, color: "#eab308" },
     { name: "Platinum", value: memberGradeData.platinum || 0, color: "#8b5cf6" },
     { name: "Diamond", value: memberGradeData.diamond || 0, color: "#10b981" }

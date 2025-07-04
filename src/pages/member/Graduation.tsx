@@ -40,7 +40,8 @@ import {
   Trash2, 
   Book, 
   ArrowRight, 
-  CheckCircle2 
+  CheckCircle2, 
+  Play
 } from "lucide-react";
 import { generateId } from "@/utils/dataUtils";
 import { EducationService } from "@/services/EducationService";
@@ -99,6 +100,10 @@ const MemberGraduation: React.FC = () => {
   const [classDialogOpen, setClassDialogOpen] = useState(false);
   const [certificationDialogOpen, setCertificationDialogOpen] = useState(false);
   const [pathDialogOpen, setPathDialogOpen] = useState(false);
+
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedCourseClasses, setSelectedCourseClasses] = useState<Class[]>([]);
+  const [currentClassIndex, setCurrentClassIndex] = useState<number>(0);
 
   // Funções para gerenciar cursos
   const handleAddCourse = () => {
@@ -311,6 +316,28 @@ const handleAddPath = async () => {
   } else {
     return url; // Direct video URL like .mp4 or other
   }
+};
+  const handleViewCourse = async (course: Course) => {
+  try {
+    setSelectedCourse(course);
+    if (course.classes && course.classes.length > 0) {
+      const classList = await EducationService.getClassesByIds(course.classes);
+      setSelectedCourseClasses(classList);
+      setCurrentClassIndex(0); // Show the first class initially
+    } else {
+      setSelectedCourseClasses([]);
+    }
+  } catch (err) {
+    toast.error("Erro ao carregar aulas do curso");
+  }
+};
+function isVideoUrl(url: string): boolean {
+  return (
+    url.includes("youtube.com/watch?v=") ||
+    url.includes("youtu.be/") ||
+    url.includes("vimeo.com/") ||
+    url.toLowerCase().endsWith(".mp4")
+  );
 }
 
 
@@ -329,14 +356,10 @@ const handleAddPath = async () => {
             <BookOpen className="mr-2 h-4 w-4" />
             Cursos
           </TabsTrigger>
-          <TabsTrigger value="classes">
-            <Video className="mr-2 h-4 w-4" />
-            Aulas
-          </TabsTrigger>
-          <TabsTrigger value="certifications">
+          {/* <TabsTrigger value="certifications">
             <GraduationCap className="mr-2 h-4 w-4" />
             Certificações
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="paths">
             <Book className="mr-2 h-4 w-4" />
             Trilhas
@@ -446,7 +469,7 @@ const handleAddPath = async () => {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Duração</TableHead>
                       <TableHead>Aulas</TableHead>
-                    
+                     <TableHead className="w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -463,7 +486,12 @@ const handleAddPath = async () => {
                           <TableCell className="max-w-xs truncate">{course.description}</TableCell>
                           <TableCell>{course.duration} min</TableCell>
                           <TableCell>{course.classes.length} aulas</TableCell>
-                        
+                         <div className="flex items-center space-x-2">
+                             <Button variant="ghost" size="icon" onClick={() => handleViewCourse(course)}>
+                              <Play className="h-4 w-4" />
+                              <span className="sr-only">Visualizar</span>
+                            </Button>
+                         </div>
                         </TableRow>
                       ))
                     )}
@@ -472,7 +500,95 @@ const handleAddPath = async () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+            {selectedCourse && (
+                  <Card className="mt-6">
+                    <CardHeader>
+                      <CardTitle>{selectedCourse.title} - Aulas</CardTitle>
+                      <CardDescription>{selectedCourse.description}</CardDescription>
+                    </CardHeader>
+                  <CardContent>
+                  {selectedCourseClasses.length === 0 ? (
+                    <p className="text-muted-foreground">Este curso não possui aulas.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Left side: class list */}
+                      <div className="space-y-2">
+                        {selectedCourseClasses.map((cls, index) => (
+                          <Button
+                            key={cls.id}
+                            variant={index === currentClassIndex ? "default" : "outline"}
+                            onClick={() => setCurrentClassIndex(index)}
+                            className="w-full justify-start"
+                          >
+                            {cls.title}
+                          </Button>
+                        ))}
+                      </div>
+          
+                      {/* Middle: video player or link */}
+                      <div className="md:col-span-2 space-y-4">
+                        <h3 className="text-lg font-semibold">
+                          {selectedCourseClasses[currentClassIndex]?.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedCourseClasses[currentClassIndex]?.description}
+                        </p>
+          
+                        {(() => {
+                          const url = selectedCourseClasses[currentClassIndex]?.video_url;
+                          if (!url) {
+                            return <p className="text-sm text-muted-foreground">Sem recurso</p>;
+                          }
+          
+                    if (isVideoUrl(url)) {
+                      // Only show iframe if it's a video
+                      return (
+                        <div className="aspect-video">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            src={getEmbedUrl(url)}
+                            title="Vídeo da aula"
+                            frameBorder="0"
+                            allowFullScreen
+                            className="w-full h-full rounded-md"
+                          />
+                        </div>
+                      );
+                    }
+          
+                    // Otherwise, just show clickable URL
+                    return (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
+                        inline-block mt-2
+                        text-primary hover:text-primary-dark
+                        underline
+                        break-words
+                        max-w-full
+                        truncate
+                        hover:underline
+                        transition
+                        cursor-pointer
+                      "
+                      title={url} // shows full URL on hover
+                    >
+                      {url}
+                    </a>
+                  );
+          
+                  })()}
+                </div>
+              </div>
+            )}
+          </CardContent>
+         </Card>
+       )}
+       
+               </TabsContent>
 
         {/* Aulas */}
         <TabsContent value="classes">

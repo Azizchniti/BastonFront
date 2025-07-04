@@ -40,7 +40,8 @@ import {
   Trash2, 
   Book, 
   ArrowRight, 
-  CheckCircle2 
+  CheckCircle2, 
+  Play
 } from "lucide-react";
 import { generateId } from "@/utils/dataUtils";
 import { EducationService } from "@/services/EducationService";
@@ -51,6 +52,9 @@ const [courses, setCourses] = useState<Course[]>([]);
 const [classes, setClasses] = useState<Class[]>([]);
 const [certifications, setCertifications] = useState<Certification[]>([]);
 const [paths, setPaths] = useState<LearningPath[]>([]);
+const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+const [selectedCourseClasses, setSelectedCourseClasses] = useState<Class[]>([]);
+const [currentClassIndex, setCurrentClassIndex] = useState<number>(0);
 
 
 useEffect(() => {
@@ -180,6 +184,22 @@ const handleAddClass = async () => {
     toast.success("Aula excluída com sucesso!");
   };
 
+  const handleViewCourse = async (course: Course) => {
+  try {
+    setSelectedCourse(course);
+    if (course.classes && course.classes.length > 0) {
+      const classList = await EducationService.getClassesByIds(course.classes);
+      setSelectedCourseClasses(classList);
+      setCurrentClassIndex(0); // Show the first class initially
+    } else {
+      setSelectedCourseClasses([]);
+    }
+  } catch (err) {
+    toast.error("Erro ao carregar aulas do curso");
+  }
+};
+
+
   // Funções para gerenciar certificações
 const handleAddCertification = async () => {
   if (!newCertification.title || !newCertification.description) {
@@ -282,6 +302,64 @@ const handleDeletePath = async (id: string) => {
     return course ? course.title : "Curso não encontrado";
   };
 
+  const convertToEmbedUrl = (url: string): string => {
+  if (!url.includes("youtube.com") && !url.includes("youtu.be")) return url;
+
+  const videoIdMatch = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/
+  );
+  const videoId = videoIdMatch?.[1];
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+};
+
+function isPdfUrl(url: string): boolean {
+  return (
+    url.toLowerCase().endsWith(".pdf") ||
+    url.includes("drive.google.com/file/d/") ||
+    url.includes("docs.google.com/file/d/") ||
+    url.includes("docs.google.com/document/d/") // optional: depends on what you're embedding
+  );
+}
+function isGoogleDocUrl(url: string): boolean {
+  return url.includes("docs.google.com/document/d/");
+}
+
+function getGoogleDocEmbedUrl(url: string): string {
+  const match = url.match(/docs\.google\.com\/document\/d\/([^/]+)/);
+  const docId = match?.[1];
+  return docId
+    ? `https://docs.google.com/document/d/${docId}/preview`
+    : url;
+}
+
+
+
+function isVideoUrl(url: string): boolean {
+  return (
+    url.includes("youtube.com/watch?v=") ||
+    url.includes("youtu.be/") ||
+    url.includes("vimeo.com/") ||
+    url.toLowerCase().endsWith(".mp4")
+  );
+}
+
+function getEmbedUrl(url: string): string {
+  if (url.includes("youtube.com/watch?v=")) {
+    const videoId = url.split("v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  } else if (url.includes("youtu.be/")) {
+    const videoId = url.split("youtu.be/")[1];
+    return `https://www.youtube.com/embed/${videoId}`;
+  } else if (url.includes("vimeo.com/")) {
+    const videoId = url.split("vimeo.com/")[1];
+    return `https://player.vimeo.com/video/${videoId}`;
+  } else {
+    return url; // fallback (e.g., .mp4)
+  }
+}
+
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -301,10 +379,10 @@ const handleDeletePath = async (id: string) => {
             <Video className="mr-2 h-4 w-4" />
             Aulas
           </TabsTrigger>
-          <TabsTrigger value="certifications">
+          {/* <TabsTrigger value="certifications">
             <GraduationCap className="mr-2 h-4 w-4" />
             Certificações
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="paths">
             <Book className="mr-2 h-4 w-4" />
             Trilhas
@@ -432,15 +510,20 @@ const handleDeletePath = async (id: string) => {
                           <TableCell>{course.duration} min</TableCell>
                           <TableCell>{(course.classes ?? []).length} aulas</TableCell>
                           <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course)}>
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">Editar</span>
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)}>
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Excluir</span>
-                              </Button>
+                          <div className="flex items-center space-x-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course)}>
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Editar</span>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)}>
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Excluir</span>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleViewCourse(course)}>
+                              <Play className="h-4 w-4" />
+                              <span className="sr-only">Visualizar</span>
+                            </Button>
+         
                             </div>
                           </TableCell>
                         </TableRow>
@@ -451,6 +534,95 @@ const handleDeletePath = async (id: string) => {
               </div>
             </CardContent>
           </Card>
+          {selectedCourse && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>{selectedCourse.title} - Aulas</CardTitle>
+            <CardDescription>{selectedCourse.description}</CardDescription>
+          </CardHeader>
+        <CardContent>
+        {selectedCourseClasses.length === 0 ? (
+          <p className="text-muted-foreground">Este curso não possui aulas.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left side: class list */}
+            <div className="space-y-2">
+              {selectedCourseClasses.map((cls, index) => (
+                <Button
+                  key={cls.id}
+                  variant={index === currentClassIndex ? "default" : "outline"}
+                  onClick={() => setCurrentClassIndex(index)}
+                  className="w-full justify-start"
+                >
+                  {cls.title}
+                </Button>
+              ))}
+            </div>
+
+            {/* Middle: video player or link */}
+            <div className="md:col-span-2 space-y-4">
+              <h3 className="text-lg font-semibold">
+                {selectedCourseClasses[currentClassIndex]?.title}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {selectedCourseClasses[currentClassIndex]?.description}
+              </p>
+
+              {(() => {
+                const url = selectedCourseClasses[currentClassIndex]?.video_url;
+                if (!url) {
+                  return <p className="text-sm text-muted-foreground">Sem recurso</p>;
+                }
+
+          if (isVideoUrl(url)) {
+            // Only show iframe if it's a video
+            return (
+              <div className="aspect-video">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={getEmbedUrl(url)}
+                  title="Vídeo da aula"
+                  frameBorder="0"
+                  allowFullScreen
+                  className="w-full h-full rounded-md"
+                />
+              </div>
+            );
+          }
+
+          // Otherwise, just show clickable URL
+          return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="
+              inline-block mt-2
+              text-primary hover:text-primary-dark
+              underline
+              break-words
+              max-w-full
+              truncate
+              hover:underline
+              transition
+              cursor-pointer
+            "
+            title={url} // shows full URL on hover
+          >
+            {url}
+          </a>
+        );
+
+        })()}
+      </div>
+    </div>
+  )}
+</CardContent>
+
+  </Card>
+)}
+
         </TabsContent>
 
         {/* Aulas */}
@@ -570,25 +742,9 @@ const handleDeletePath = async (id: string) => {
                           <TableCell className="font-medium">{cls.title}</TableCell>
                           <TableCell className="max-w-xs truncate">{cls.description}</TableCell>
                           <TableCell>{cls.duration} min</TableCell>
-                          <TableCell>
-                            {cls.video_url ? 
-                              <a 
-                                href={cls.video_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline"
-                              >
-                                Ver vídeo
-                              </a> : 
-                              "Sem vídeo"
-                            }
-                          </TableCell>
-                          <TableCell>
-                            {cls.materials.length > 0 ? 
-                              `${cls.materials.length} material(is)` : 
-                              "Sem materiais"
-                            }
-                          </TableCell>
+                           <TableCell className="max-w-sm">
+                          {cls.video_url}
+                            </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               <Button variant="ghost" size="icon" onClick={() => handleEditClass(cls)}>
