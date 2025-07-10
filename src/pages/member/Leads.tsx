@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Lead, LeadStatus, Member } from "@/types";
@@ -59,6 +59,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { MemberService } from "@/services/members.service";
 import { LeadService } from "@/services/leads.service";
 
+declare global {
+  interface Window {
+    calendar?: {
+      schedulingButton: {
+        load: (options: {
+          url: string;
+          color: string;
+          label: string;
+          target: HTMLElement;
+        }) => void;
+      };
+    };
+  }
+}
+
+
 const LEAD_STATUS_MAP: Record<LeadStatus, string> = {
   "new": "Novo Lead",
   "contacted": "Primeiro Contato",
@@ -108,6 +124,7 @@ const MemberLeads: React.FC = () => {
   const { updateLead } = useData();
  const [currentMember, setCurrentMember] = useState<Member | null>(null);
  const [loading, setLoading] = useState(true);
+
 
  useEffect(() => {
    const fetchMember = async () => {
@@ -244,6 +261,37 @@ const handleEditLead = (lead: Lead) => {
   leadForm.setValue("phone", lead.phone);
   leadForm.setValue("source", lead.source);
 };
+const handleOpenGoogleCalendarPopup = () => {
+  const iframe = document.createElement("iframe");
+  iframe.src =
+    "https://calendar.google.com/calendar/appointments/schedules/AcZssZ1aDRCK5ISk-SY97zRzAmUWsLEz2VxNjmPDcljDFfJqH2iPvOkBsG7ZMHPU4iTYK0fgryYOgpoJ?gv=true";
+  iframe.style.position = "fixed";
+  iframe.style.top = "50%";
+  iframe.style.left = "50%";
+  iframe.style.transform = "translate(-50%, -50%)";
+  iframe.style.width = "80%";
+  iframe.style.height = "94%";
+  iframe.style.border = "1px solid #ccc";
+  iframe.style.borderRadius = "8px";
+  iframe.style.zIndex = "1001";
+  iframe.style.backgroundColor = "#fff";
+
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+  overlay.style.zIndex = "1000";
+  overlay.addEventListener("click", () => {
+    document.body.removeChild(iframe);
+    document.body.removeChild(overlay);
+  });
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(iframe);
+};
 
 
 const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: boolean }) => (
@@ -319,30 +367,29 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
       </div>
 
       <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Gerenciamento de Leads</CardTitle>
-            <CardDescription>
-              Visualize e acompanhe todos os seus leads cadastrados
-            </CardDescription>
-          </div>
-          <a
-            href="https://calendar.app.google/PvfceJmKvvAgkbN99"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50">
-              <img
-                src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png"
-                alt="Google Calendar"
-                className="w-5 h-5"
-              />
-              Agendar Reunião
-            </Button>
-          </a>
-        </div>
-      </CardHeader>
+    <CardHeader>
+  <div className="flex justify-between items-center">
+    <div>
+      <CardTitle>Gerenciamento de Leads</CardTitle>
+      <CardDescription>
+        Visualize e acompanhe todos os seus leads cadastrados
+      </CardDescription>
+    </div>
+    <Button
+      variant="outline"
+      className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+      onClick={handleOpenGoogleCalendarPopup}
+    >
+      <img
+        src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png"
+        alt="Google Calendar"
+        className="w-5 h-5"
+      />
+      Agendar Reunião
+    </Button>
+  </div>
+</CardHeader>
+
 
         <CardContent>
           <div className="flex mb-4">
