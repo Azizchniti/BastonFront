@@ -17,6 +17,7 @@ export interface Course  {
   duration: number;
   createdAt: Date;
   updatedAt: Date;
+  image_url?: string;
 }
 
 export interface Class {

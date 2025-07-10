@@ -22,6 +22,7 @@ type DataContextType = {
   updateMember: (id: string, data: Partial<Member>) => void;
   deleteMember: (id: string) => void;
   addLead: (lead: Omit<Lead, "id" | "created_at" | "updated_at">) => Promise<boolean>;
+  fetchLeads: () => Promise<void>;
   updateLead: (id: string, data: Partial<Lead>) => void;
   deleteLead: (id: string) => void;
   closeLead: (id: string, sale_value: number) => void;
@@ -227,6 +228,7 @@ const changeStatus = async (id: string, status: LeadStatus, saleValue: number | 
     getMemberSquad, 
     getSquadMetrics,
     changeStatus,
+    fetchLeads: leadContext.fetchLeads,
     
   };
   

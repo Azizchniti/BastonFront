@@ -460,45 +460,62 @@ function isVideoUrl(url: string): boolean {
                 </DialogContent>
               </Dialog>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Título</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Duração</TableHead>
-                      <TableHead>Aulas</TableHead>
-                     <TableHead className="w-[120px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {courses.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4">
-                          <p className="text-muted-foreground">Nenhum curso cadastrado</p>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      courses.map((course) => (
-                        <TableRow key={course.id}>
-                          <TableCell className="font-medium">{course.title}</TableCell>
-                          <TableCell className="max-w-xs truncate">{course.description}</TableCell>
-                          <TableCell>{course.duration} min</TableCell>
-                          <TableCell>{course.classes.length} aulas</TableCell>
-                         <div className="flex items-center space-x-2">
-                             <Button variant="ghost" size="icon" onClick={() => handleViewCourse(course)}>
-                              <Play className="h-4 w-4" />
-                              <span className="sr-only">Visualizar</span>
-                            </Button>
-                         </div>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
+           <CardContent>
+  {courses.length === 0 ? (
+    <div className="text-center py-10 text-muted-foreground text-sm">
+      Nenhum curso cadastrado
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+      {courses.map((course) => (
+        <div
+          key={course.id}
+          className="group relative rounded-xl overflow-hidden border border-muted shadow-sm hover:shadow-md transition duration-300 bg-background"
+        >
+          {/* Course Image */}
+          {course.image_url ? (
+            <img
+              src={course.image_url}
+              alt={course.title}
+              className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-40 bg-muted flex items-center justify-center text-muted-foreground text-xs">
+              Sem imagem
+            </div>
+          )}
+
+          {/* Course Info */}
+          <div className="p-4 flex flex-col gap-1">
+            <h3 className="font-semibold text-base truncate">{course.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {course.description}
+            </p>
+
+            <div className="flex justify-between text-xs text-muted-foreground mt-2">
+              <span>{course.duration} min</span>
+              <span>{(course.classes ?? []).length} aulas</span>
+            </div>
+          </div>
+
+          {/* View Button */}
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-background hover:text-success"
+              onClick={() => handleViewCourse(course)}
+            >
+              <Play className="w-4 h-4" />
+              <span className="sr-only">Visualizar</span>
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</CardContent>
+
           </Card>
             {selectedCourse && (
                   <Card className="mt-6">

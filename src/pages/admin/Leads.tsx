@@ -48,7 +48,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Search, Plus, FileEdit, Trash, NotebookText, ChartPie } from "lucide-react";
+import { Search, Plus, FileEdit, Trash, NotebookText, ChartPie, CalendarDays } from "lucide-react";
 import { MemberService } from "@/services/members.service";
 import DeleteLeadDialog from "@/components/DeleteLeadDialog";
 
@@ -219,7 +219,6 @@ const filteredLeads = leads.filter((lead) => {
 });
 
 
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -230,12 +229,30 @@ const filteredLeads = leads.filter((lead) => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Gerenciamento de Leads</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todos os leads cadastrados no sistema
-          </CardDescription>
-        </CardHeader>
+          <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Gerenciamento de Leads</CardTitle>
+                    <CardDescription>
+                      Visualize e acompanhe todos os seus leads cadastrados
+                    </CardDescription>
+                  </div>
+                  <a
+                    href="https://calendar.app.google/PvfceJmKvvAgkbN99"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button variant="outline" className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50">
+                      <img
+                        src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png"
+                        alt="Google Calendar"
+                        className="w-5 h-5"
+                      />
+                      Agendar Reunião
+                    </Button>
+                  </a>
+                </div>
+              </CardHeader>
         <CardContent>
           <div className="flex mb-4">
             <div className="relative flex-1">

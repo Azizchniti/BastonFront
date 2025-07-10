@@ -24,6 +24,7 @@ type LeadContextType = {
   getMemberActiveLeads: (memberId: string) => Lead[];
   getMemberClosedLeads: (memberId: string) => Lead[];
   getMemberLostLeads: (memberId: string) => Lead[];
+  fetchLeads: () => Promise<void>;
   addNotes: (id: string, notes: string) => Promise<boolean>;
   changeStatus: (id: string, status: LeadStatus) => Promise<boolean>;
   findLead: (id: string) => Lead | undefined;
@@ -163,6 +164,17 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .reduce((acc, lead) => acc + (lead.sale_value || 0), 0);
   };
 
+  // LeadContext.tsx (assumed structure)
+const fetchLeads = async () => {
+  try {
+    const leadsFromApi = await LeadService.getAllLeads();
+    setLeads(leadsFromApi); // assuming you're using useState to store leads
+  } catch (error) {
+    console.error("Erro ao buscar leads:", error);
+  }
+};
+
+
   return (
     <LeadContext.Provider
       value={{
@@ -183,6 +195,7 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
         findLead,
         getLeadCountByStatus,
         getTotalSalesValue,
+        fetchLeads,
       }}
     >
       {children}

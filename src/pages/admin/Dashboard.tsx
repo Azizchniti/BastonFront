@@ -224,7 +224,7 @@ const paidFilteredCommissionAmount = filteredCommissions
   
   // Obter os top squads
   const topSquads = getTopSquads().slice(0, 10);
-
+const filteredStatusData = leadStatusData.filter((entry) => entry.value > 0);
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -335,7 +335,7 @@ const paidFilteredCommissionAmount = filteredCommissions
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={leadStatusData}
+                  data={filteredStatusData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -344,7 +344,7 @@ const paidFilteredCommissionAmount = filteredCommissions
                   dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
                 >
-                  {leadStatusData.map((entry, index) => (
+                  {filteredStatusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

@@ -91,6 +91,7 @@ const MemberLeads: React.FC = () => {
     getMemberLostLeads, 
     addLead ,
     addNotes,
+    fetchLeads,
     leads
   } = useData();
   
@@ -138,12 +139,15 @@ const MemberLeads: React.FC = () => {
 const handleSubmitLead = async (values) => {
   const { phone, name, source } = values;
 
+  if (!currentMember || !currentMember.id) {
+    toast.error("Usuário atual não encontrado.");
+    return;
+  }
+
   try {
-    // 1. Get all leads (or you can create a getLeadByPhone() endpoint later)
     const allLeads = await LeadService.getAllLeads();
     const existingLead = allLeads.find((lead) => lead.phone === phone);
 
-    // 2. If no lead exists, create it
     if (!existingLead) {
       await LeadService.createLead({
         name,
@@ -151,18 +155,18 @@ const handleSubmitLead = async (values) => {
         source,
         member_id: currentMember.id,
       });
+
+      await fetchLeads(); // ✅ Refresh the list
       toast.success("Lead criado com sucesso!");
       setIsAddDialogOpen(false);
       return;
     }
 
-    // 3. If lead is already owned by the current member
     if (existingLead.member_id === currentMember.id) {
       toast.error("Este lead já está cadastrado por você.");
       return;
     }
 
-    // 4. If lead is owned by someone else, check age
     const createdAt = new Date(existingLead.created_at);
     const now = new Date();
     const ageInDays = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -172,19 +176,17 @@ const handleSubmitLead = async (values) => {
       return;
     }
 
-    // 5. Offer to transfer ownership if 15+ days passed
     const confirm = window.confirm(
       "Este lead foi criado há mais de 15 dias por outro membro. Deseja assumir esse lead?"
     );
-
     if (!confirm) return;
 
-    // 6. Update ownership
     await LeadService.updateLead(existingLead.id, {
       member_id: currentMember.id,
       created_at: new Date().toISOString(),
     });
 
+    await fetchLeads(); // ✅ Refresh after assuming
     toast.success("Lead assumido com sucesso!");
     setIsAddDialogOpen(false);
   } catch (err) {
@@ -317,12 +319,31 @@ const LeadTable = ({ leads, isClosed = false }: { leads: Lead[], isClosed?: bool
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Gerenciamento de Leads</CardTitle>
-          <CardDescription>
-            Visualize e acompanhe todos os seus leads cadastrados
-          </CardDescription>
-        </CardHeader>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Gerenciamento de Leads</CardTitle>
+            <CardDescription>
+              Visualize e acompanhe todos os seus leads cadastrados
+            </CardDescription>
+          </div>
+          <a
+            href="https://calendar.app.google/PvfceJmKvvAgkbN99"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50">
+              <img
+                src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png"
+                alt="Google Calendar"
+                className="w-5 h-5"
+              />
+              Agendar Reunião
+            </Button>
+          </a>
+        </div>
+      </CardHeader>
+
         <CardContent>
           <div className="flex mb-4">
             <div className="relative flex-1">

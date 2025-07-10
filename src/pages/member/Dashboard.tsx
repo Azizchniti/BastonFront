@@ -291,7 +291,8 @@ const formatCurrency = (value: number) => {
   // Progresso para o próximo nível
   const levelProgress = getNextLevelProgress(currentMember.grade, currentMember.total_sales);
 
-  
+  const filteredStatusData = statusData.filter((entry) => entry.value > 0);
+
 
   return (
     <div className="space-y-6">
@@ -425,23 +426,24 @@ const formatCurrency = (value: number) => {
               </CardHeader>
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [value, "Leads"]} />
-                  </PieChart>
+          <PieChart>
+            <Pie
+              data={filteredStatusData}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
+            >
+              {filteredStatusData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => [value, "Leads"]} />
+          </PieChart>
+
                 </ResponsiveContainer>
               </CardContent>
             </Card>

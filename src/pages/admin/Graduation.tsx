@@ -7,6 +7,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { v4 as uuidv4 } from 'uuid';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,11 +65,12 @@ useEffect(() => {
   EducationService.getPaths().then(setPaths);
 }, []);
 
-  const [newCourse, setNewCourse] = useState<Partial<Course>>({
+  const [newCourse, setNewCourse] = useState<Partial<Course> & { imageFile?: File }>({
     title: "",
     description: "",
     classes: [],
-    duration: 0
+    duration: 0,
+    imageFile: undefined,
   });
 
   const [newClass, setNewClass] = useState<Partial<Class>>({
@@ -102,28 +104,71 @@ useEffect(() => {
   const [certificationDialogOpen, setCertificationDialogOpen] = useState(false);
   const [pathDialogOpen, setPathDialogOpen] = useState(false);
 
-  // Funções para gerenciar cursos
-const handleAddCourse = async () => {
+ const handleAddCourse = async () => {
   if (!newCourse.title || !newCourse.description) {
     toast.error("Preencha todos os campos obrigatórios");
     return;
   }
 
   try {
+    let imageUrl;
+
+    if (newCourse.imageFile) {
+      const formData = new FormData();
+      const courseId = newCourse.id || uuidv4(); // generate an ID if creating new
+
+      formData.append("image", newCourse.imageFile);
+
+      const response = await fetch(`https://pfp-backend-0670.onrender.com/api/upload/course-image/${courseId}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      let result = null;
+      try {
+        result = await response.json(); // try to parse JSON
+      } catch {
+        // no JSON returned; that's fine as long as response.ok is true
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Erro ao enviar imagem");
+      }
+
+      imageUrl = result?.url ?? `${process.env.NEXT_PUBLIC_BUCKET_URL}/courses/${courseId}`;
+
+      if (!newCourse.id) {
+        newCourse.id = courseId;
+      }
+    }
+
     if (isEditingCourse && newCourse.id) {
-      const updated = await EducationService.updateCourse(newCourse.id, newCourse);
-      setCourses(prev => prev.map(c => c.id === updated.id ? updated : c));
+      const updated = await EducationService.updateCourse(newCourse.id, {
+        ...newCourse,
+        image_url: imageUrl ?? newCourse.image_url,
+      });
+      setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       toast.success("Curso atualizado com sucesso!");
     } else {
-      const created = await EducationService.createCourse(newCourse);
-      setCourses(prev => [...prev, created]);
+      const created = await EducationService.createCourse({
+        ...newCourse,
+        image_url: imageUrl,
+      });
+      setCourses((prev) => [...prev, created]);
       toast.success("Curso adicionado com sucesso!");
     }
 
-    setNewCourse({ title: "", description: "", classes: [], duration: 0 });
+    setNewCourse({
+      title: "",
+      description: "",
+      classes: [],
+      duration: 0,
+      imageFile: undefined,
+    });
     setCourseDialogOpen(false);
     setIsEditingCourse(false);
   } catch (err) {
+    console.error(err);
     toast.error("Erro ao salvar curso");
   }
 };
@@ -429,6 +474,19 @@ function getEmbedUrl(url: string): string {
                       />
                     </div>
                     <div className="grid gap-2">
+                      <Label htmlFor="image">Imagem do curso</Label>
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          setNewCourse((prev) => ({ ...prev, imageFile: file }));
+                        }}
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
                       <Label htmlFor="description">Descrição</Label>
                       <Textarea
                         id="description"
@@ -483,56 +541,77 @@ function getEmbedUrl(url: string): string {
                 </DialogContent>
               </Dialog>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Título</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Duração</TableHead>
-                      <TableHead>Aulas</TableHead>
-                      <TableHead className="w-[120px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {courses.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4">
-                          <p className="text-muted-foreground">Nenhum curso cadastrado</p>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      courses.map((course) => (
-                        <TableRow key={course.id}>
-                          <TableCell className="font-medium">{course.title}</TableCell>
-                          <TableCell className="max-w-xs truncate">{course.description}</TableCell>
-                          <TableCell>{course.duration} min</TableCell>
-                          <TableCell>{(course.classes ?? []).length} aulas</TableCell>
-                          <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course)}>
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Editar</span>
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteCourse(course.id)}>
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Excluir</span>
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleViewCourse(course)}>
-                              <Play className="h-4 w-4" />
-                              <span className="sr-only">Visualizar</span>
-                            </Button>
-         
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
+         <CardContent>
+  {courses.length === 0 ? (
+    <div className="text-center py-10 text-muted-foreground text-sm">
+      Nenhum curso cadastrado
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+      {courses.map((course) => (
+        <div
+          key={course.id}
+          className="group relative rounded-xl overflow-hidden border border-muted shadow-sm hover:shadow-md transition duration-300 bg-background"
+        >
+          {/* Course Image */}
+          {course.image_url ? (
+            <img
+              src={course.image_url}
+              alt={course.title}
+              className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-40 bg-muted flex items-center justify-center text-muted-foreground text-xs">
+              Sem imagem
+            </div>
+          )}
+
+          {/* Course Content */}
+          <div className="p-4 flex flex-col gap-1">
+            <h3 className="font-semibold text-base truncate">{course.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {course.description}
+            </p>
+
+            <div className="flex justify-between text-xs text-muted-foreground mt-2">
+              <span>{course.duration} min</span>
+              <span>{(course.classes ?? []).length} aulas</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-background hover:text-primary"
+              onClick={() => handleEditCourse(course)}
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-background hover:text-destructive"
+              onClick={() => handleDeleteCourse(course.id)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-background hover:text-green-500"
+              onClick={() => handleViewCourse(course)}
+            >
+              <Play className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</CardContent>
+
           </Card>
           {selectedCourse && (
         <Card className="mt-6">
@@ -745,6 +824,7 @@ function getEmbedUrl(url: string): string {
                            <TableCell className="max-w-sm">
                           {cls.video_url}
                             </TableCell>
+                            <TableCell>{cls.materials} min</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               <Button variant="ghost" size="icon" onClick={() => handleEditClass(cls)}>
