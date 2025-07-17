@@ -118,21 +118,21 @@ export const LeadProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getMemberLostLeads = (memberId: string) =>
     leads.filter((lead) => lead.member_id === memberId && lead.status === "lost");
 
+
     const addNotes = async (id: string, newNote: string): Promise<boolean> => {
-      try {
-        const lead = leads.find((lead) => lead.id === id);
-        if (!lead) throw new Error("Lead não encontrado");
+  try {
+    const lead = leads.find((lead) => lead.id === id);
+    if (!lead) throw new Error("Lead não encontrado");
 
-        const updatedNotes = lead.notes ? `${lead.notes}\n${newNote}` : newNote;
+    await LeadService.updateLead(id, { notes: newNote }); // ✅ Replace, don't append
+    await refreshLeads();
+    return true;
+  } catch (err) {
+    toast.error("Erro ao adicionar nota");
+    return false;
+  }
+};
 
-        await LeadService.updateLead(id, { notes: updatedNotes });
-        await refreshLeads();
-        return true;
-      } catch (err) {
-        toast.error("Erro ao adicionar nota");
-        return false;
-      }
-    };
 
 
   const changeStatus = async (id: string, status: LeadStatus): Promise<boolean> => {
