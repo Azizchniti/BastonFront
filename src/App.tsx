@@ -37,6 +37,8 @@ import MemberGraduation from "./pages/member/Graduation";
 
 import Signup from "./pages/Signup";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +55,8 @@ const App = () => (
               <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
                <Route path="/signup" element={<Signup />} /> 
+               <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/sendemail" element={<ForgotPassword />} />
               
               {/* Admin routes */}
               <Route 

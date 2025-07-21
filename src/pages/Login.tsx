@@ -144,6 +144,16 @@ const handleSubmit = async (event: React.FormEvent) => {
                 )}
               </Button>
             </CardContent>
+            <div className="flex justify-end text-sm">
+              <button
+                type="button"
+                onClick={() => navigate("/sendemail")}
+                className="text-blue-600 hover:underline"
+              >
+                Esqueceu sua senha?
+              </button>
+            </div>
+
           </form>
 
           {/* <div className="text-sm text-center mt-4">

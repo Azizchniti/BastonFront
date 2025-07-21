@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -317,6 +317,7 @@ const handleAddPath = async () => {
     return url; // Direct video URL like .mp4 or other
   }
 };
+const courseContentRef = useRef<HTMLDivElement>(null);
   const handleViewCourse = async (course: Course) => {
   try {
     setSelectedCourse(course);
@@ -324,6 +325,9 @@ const handleAddPath = async () => {
       const classList = await EducationService.getClassesByIds(course.classes);
       setSelectedCourseClasses(classList);
       setCurrentClassIndex(0); // Show the first class initially
+      setTimeout(() => {
+    courseContentRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, 100);
     } else {
       setSelectedCourseClasses([]);
     }
@@ -518,7 +522,7 @@ function isVideoUrl(url: string): boolean {
 
           </Card>
             {selectedCourse && (
-                  <Card className="mt-6">
+                  <Card className="mt-6" ref={courseContentRef}>
                     <CardHeader>
                       <CardTitle>{selectedCourse.title} - Aulas</CardTitle>
                       <CardDescription>{selectedCourse.description}</CardDescription>

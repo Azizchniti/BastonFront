@@ -111,4 +111,27 @@ export const inviteUser = async (
     console.log('Error response data:', error.response?.data);
     return null;
   }
+
+  
+};
+export const changePassword = async (email: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/change-password`, { email });
+    return response.data; // You can customize this message based on your backend
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error.message || "Erro ao solicitar redefinição de senha.";
+    throw new Error(message);
+  }
+};
+export const requestPasswordReset = async (email: string) => {
+  try {
+    const response = await axios.post(`${API_URL}/request-password-reset`, { email });
+    return response.data;
+  } catch (error: any) {
+    console.error("Request password reset error:", error);
+    throw new Error(
+      error?.response?.data?.error || "Erro ao enviar o link de redefinição de senha."
+    );
+  }
 };
