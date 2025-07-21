@@ -27,11 +27,7 @@ const ForgotPassword: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 space-y-6 text-center relative">
         {/* Small icon top-left */}
-        <img
-          src="/ICONE_-_AZUL.webp"
-          alt="Foco Icon"
-          className="absolute top-6 left-6 w-12 h-12 object-contain"
-        />
+       
 
         {/* Banner icon centered */}
         <div className="mb-8">
