@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,11 +21,17 @@ import {
   FileText,
   GraduationCap,
   Megaphone,
-  ChevronLeft
+  ChevronLeft,
+  LucideIcon
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
+import supabase from "@/integrations/supabase/client";
+import { AnnouncementService } from "@/services/announcement.services";
+import { AnnouncementViewService } from "@/services/announcementviews.services";
+import { Announcement } from "@/types";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,6 +39,13 @@ interface SidebarProps {
   isCollapsed: boolean;
   toggleCollapse: () => void;
 }
+type LinkItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  key?: string;
+  count?: number;
+};
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   isOpen, 
@@ -48,6 +61,46 @@ const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   
   const isAdmin = user?.role === "admin";
+   const unreadCount = useUnreadAnnouncements(user.id);
+   const [unseenCount, setUnseenCount] = useState(0);
+const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  useEffect(() => {
+    const markAllAsViewed = async () => {
+      if (!user?.id || announcements.length === 0) return;
+
+      for (const ann of announcements) {
+        try {
+          await AnnouncementViewService.createView(ann.id, user.id);
+        } catch (err) {
+          console.error(`Failed to mark viewed for announcement ${ann.id}`, err);
+        }
+      }
+    };
+
+    markAllAsViewed();
+  }, [announcements, user]);
+  
+useEffect(() => {
+  const fetchUnseen = async () => {
+    if (!user?.id) return;
+    console.log("Fetching unseen for user:", user.id);
+
+    try {
+    const count = await AnnouncementViewService.getUnseenCount(user.id);
+      console.log('Unseen count returned by service:', count);
+      setUnseenCount(count);
+    } catch (error) {
+      console.error("Failed to fetch unseen count", error);
+    }
+  };
+
+  fetchUnseen();
+}, [user]);
+useEffect(() => {
+  console.log("Updated unseen count:", unseenCount);
+}, [unseenCount]);
+
 
   const adminLinks = [
     {
@@ -84,6 +137,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       title: "Mural",
       href: "/admin/mural",
       icon: Megaphone,
+      key: "admin-mural",
+     
+      
     },
     // {
     //   title: "Relatórios",
@@ -137,6 +193,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       title: "Mural",
       href: "/member/mural",
       icon: Megaphone,
+      count: unreadCount,
+      key: "community",
     },
     {
        title: "Graduação",
@@ -166,15 +224,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
               </Button>
 
-    {!isCollapsed && (
-  <Link to="/" className="flex items-center gap-2 px-4">
-    <img
-      src="/V2_-_AZUL.webp"
-      alt="Foco Hub Icon"
-      className="w-20 h-auto object-contain ml-4"
-    />
-  </Link>
-)}
+            {!isCollapsed && (
+          <Link to="/" className="flex items-center gap-2 px-4">
+            <img
+              src="/V2_-_AZUL.webp"
+              alt="Foco Hub Icon"
+              className="w-20 h-auto object-contain ml-4"
+            />
+          </Link>
+        )}
 
           
           {isCollapsed && (
@@ -188,30 +246,40 @@ const Sidebar: React.FC<SidebarProps> = ({
           <X className="w-5 h-5" />
         </Button>
       </div>
-      
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="flex flex-col gap-2">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              to={link.href}
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            to={link.href}
+            className={cn(
+              "flex items-center justify-between px-3 py-2.5 rounded-lg group transition-all hover:bg-accent hover:text-accent-foreground",
+              location.pathname === link.href && "bg-accent text-accent-foreground font-medium"
+            )}
+          >
+            <div
               className={cn(
-                "flex items-center justify-between px-3 py-2.5 rounded-lg group transition-all hover:bg-accent hover:text-accent-foreground",
-                location.pathname === link.href && "bg-accent text-accent-foreground font-medium"
+                "flex items-center gap-3 relative",
+                isCollapsed && "justify-center w-full"
               )}
             >
-              <div className={cn(
-                "flex items-center gap-3",
-                isCollapsed && "justify-center w-full"
-              )}>
-                <link.icon className="w-5 h-5" />
-                {!isCollapsed && <span>{link.title}</span>}
-              </div>
-              {!isCollapsed && (
-                <ChevronRight className="w-4 h-4 opacity-0 transition-opacity group-hover:opacity-70" />
+              <link.icon className="w-5 h-5" />
+              {!isCollapsed && <span>{link.title}</span>}
+
+              {/* ✅ Show badge ONLY on Mural link */}
+              {link.title === "Mural" && unseenCount > 0 && (
+                <span className="absolute -top-1 left-5 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                  {unseenCount}
+                </span>
               )}
-            </Link>
-          ))}
+            </div>
+
+            {!isCollapsed && (
+              <ChevronRight className="w-4 h-4 opacity-0 transition-opacity group-hover:opacity-70" />
+            )}
+          </Link>
+        ))}
+
         </nav>
 
         {!isCollapsed && isAdmin && (

@@ -59,7 +59,7 @@ const Navbar: React.FC<{
                   <img
                   src="/logo_hori.webp"
                   alt="Foco Hub Icon"
-                  className="w-40 h-10 object-contain"
+                  className="w-40 h-10 object-contain ml-7"
                 />
               
          

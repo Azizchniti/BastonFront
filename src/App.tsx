@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminMembers from "./pages/admin/Members";
 import AdminLeads from "./pages/admin/Leads";
+import AdminLeadsKanban from "./pages/admin/LeadsKanban";
 import AdminSquads from "./pages/admin/Squads";
 import AdminCommissions from "./pages/admin/Commissions";
 import AdminGraduation from "./pages/admin/Graduation";
@@ -82,6 +83,14 @@ const App = () => (
                 element={
                   <AuthenticatedLayout requiredRole="admin">
                     <AdminLeads />
+                  </AuthenticatedLayout>
+                } 
+              />
+              <Route 
+                path="/admin/leadsKanban"
+                element={
+                  <AuthenticatedLayout requiredRole="admin">
+                    <AdminLeadsKanban />
                   </AuthenticatedLayout>
                 } 
               />

@@ -113,3 +113,10 @@ export interface Announcement {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface AnnouncementView {
+  id: string;
+  user_id: string;
+  announcement_id: string;
+  viewed_at: string; // use string since Supabase returns ISO timestamps
+}

@@ -48,9 +48,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Search, Plus, FileEdit, Trash, NotebookText, ChartPie, CalendarDays } from "lucide-react";
+import { Search, Plus, FileEdit, Trash, NotebookText, ChartPie, CalendarDays, SquareKanban,Table as TableIcon } from "lucide-react";
 import { MemberService } from "@/services/members.service";
 import DeleteLeadDialog from "@/components/DeleteLeadDialog";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const LEAD_STATUS_MAP: Record<LeadStatus, string> = {
   "new": "Novo Lead",
@@ -103,6 +104,9 @@ const AdminLeads: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isKanban = location.pathname.includes("leadsKanban");
 const [members, setMembers] = useState<Member[]>([]);
 const [loading, setLoading] = useState<boolean>(true);
   const leadForm = useForm<LeadFormValues>({
@@ -250,13 +254,45 @@ const filteredLeads = leads.filter((lead) => {
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Leads</h1>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Lead
-        </Button>
-      </div>
+<div className="p-4">
+<div className="space-y-6">
+<div className="flex justify-between items-center">
+  <h1 className="text-3xl font-bold">Leads</h1>
+
+  <div className="flex gap-2 items-center">
+    {/* View toggle buttons (as tabs) */}
+    <div className="flex bg-muted rounded-full p-1 border border-border">
+      <Button
+        variant="ghost"
+        className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
+          !isKanban
+            ? "bg-background text-primary shadow-sm"
+            : "text-muted-foreground hover:text-primary"
+        }`}
+        onClick={() => navigate("/admin/leads")}
+      >
+        <TableIcon className="h-4 w-4 mr-1" /> Table
+      </Button>
+      <Button
+        variant="ghost"
+        className={`rounded-full px-4 py-1 text-sm font-medium transition-colors ${
+          isKanban
+            ? "bg-background text-primary shadow-sm"
+            : "text-muted-foreground hover:text-primary"
+        }`}
+        onClick={() => navigate("/admin/leadsKanban")}
+      >
+        <SquareKanban className="h-4 w-4 mr-1" /> Kanban
+      </Button>
+    </div>
+
+    {/* Add new lead button */}
+    <Button className="rounded-full px-4 py-2">
+      <Plus className="mr-2 h-4 w-4" /> Novo Lead
+    </Button>
+  </div>
+</div>
+</div>
 
       <Card>
            <CardHeader>
@@ -429,7 +465,7 @@ const filteredLeads = leads.filter((lead) => {
                   </FormItem>
                 )}
               />
-  <FormField
+      <FormField
             control={leadForm.control}
             name="sale_value"
             render={({ field }) => {

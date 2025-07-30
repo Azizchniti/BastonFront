@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -41,6 +41,8 @@ import { generateId } from "@/utils/dataUtils";
 import { Announcement, AnnouncementType } from "@/types";
 import { useAnnouncementContext } from "@/contexts/AnnouncementContext";
 import { useData } from "@/contexts/DataContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { AnnouncementViewService } from "@/services/announcementviews.services";
 
 // Tipos de dados para comunicados e notícias
 
@@ -86,6 +88,27 @@ const {
     is_highlighted: false
   });
 
+
+const { user } = useAuth(); // 👈 get current user
+
+useEffect(() => {
+  const markAllAsViewed = async () => {
+    if (!user || !announcements.length) return;
+
+    try {
+      await Promise.all(
+        announcements.map((announcement) =>
+          AnnouncementViewService.createView(announcement.id, user.id)
+        )
+      );
+      console.log('Marked all as viewed');
+    } catch (err) {
+      console.error('Failed to mark some announcements as viewed', err);
+    }
+  };
+
+  markAllAsViewed();
+}, [user, announcements]);
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
