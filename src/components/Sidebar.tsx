@@ -66,40 +66,44 @@ const Sidebar: React.FC<SidebarProps> = ({
 const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
-    const markAllAsViewed = async () => {
-      if (!user?.id || announcements.length === 0) return;
+  const markAllAsViewed = async () => {
+    if (!user?.id || announcements.length === 0) return;
 
+    try {
+      // Mark each announcement as viewed
       for (const ann of announcements) {
-        try {
-          await AnnouncementViewService.createView(ann.id, user.id);
-        } catch (err) {
-          console.error(`Failed to mark viewed for announcement ${ann.id}`, err);
-        }
+        await AnnouncementViewService.createView(ann.id, user.id);
       }
-    };
 
-    markAllAsViewed();
-  }, [announcements, user]);
+      // 👇 Fetch unseen count again immediately after marking them all as viewed
+      const count = await AnnouncementViewService.getUnseenCount(user.id);
+      console.log('Refetched unseen count after marking as viewed:', count);
+      setUnseenCount(count);
+    } catch (err) {
+      console.error("Error in marking viewed or refetching unseen count", err);
+    }
+  };
+
+  markAllAsViewed();
+}, [announcements, user]);
+
   
 useEffect(() => {
   const fetchUnseen = async () => {
     if (!user?.id) return;
-    console.log("Fetching unseen for user:", user.id);
 
     try {
-    const count = await AnnouncementViewService.getUnseenCount(user.id);
-      console.log('Unseen count returned by service:', count);
+      const count = await AnnouncementViewService.getUnseenCount(user.id);
       setUnseenCount(count);
     } catch (error) {
       console.error("Failed to fetch unseen count", error);
     }
   };
 
+  // Fetch unseen count on login or when route changes
   fetchUnseen();
-}, [user]);
-useEffect(() => {
-  console.log("Updated unseen count:", unseenCount);
-}, [unseenCount]);
+}, [user, location.pathname]);
+
 
 
   const adminLinks = [
@@ -129,7 +133,7 @@ useEffect(() => {
       icon: DollarSign,
     },
     {
-      title: "Graduação",
+      title: "Treinamentos",
       href: "/admin/graduation",
       icon: GraduationCap,
     },
@@ -197,7 +201,7 @@ useEffect(() => {
       key: "community",
     },
     {
-       title: "Graduação",
+       title: "Treinamentos",
       href: "/member/grade",
       icon: GraduationCap,
      },
@@ -267,11 +271,12 @@ useEffect(() => {
               {!isCollapsed && <span>{link.title}</span>}
 
               {/* ✅ Show badge ONLY on Mural link */}
-              {link.title === "Mural" && unseenCount > 0 && (
+               {!isAdmin && link.title === "Mural" && unseenCount > 0 && (
                 <span className="absolute -top-1 left-5 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
                   {unseenCount}
                 </span>
               )}
+
             </div>
 
             {!isCollapsed && (

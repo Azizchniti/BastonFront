@@ -149,6 +149,18 @@ const handleToggleHighlight = (id: string) => {
   const action = announcement.is_highlighted ? 'removido dos' : 'adicionado aos';
   toast.success(`Comunicado ${action} destaques com sucesso!`);
 };
+function formatDateForInputLocal(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1); // getMonth() is zero-based
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 
   const resetForm = () => {
     setCurrentAnnouncement({
@@ -276,11 +288,10 @@ const handleToggleHighlight = (id: string) => {
                       name="publish_date"
                       type="datetime-local"
                       className="col-span-3"
-                      value={currentAnnouncement.publish_date 
-                        ? new Date(currentAnnouncement.publish_date)
-                            .toISOString()
-                            .slice(0, 16) 
-                        : ""}
+                     value={currentAnnouncement.publish_date 
+  ? formatDateForInputLocal(new Date(currentAnnouncement.publish_date))
+  : ""}
+
                       onChange={(e) => setCurrentAnnouncement({
                         ...currentAnnouncement, 
                         publish_date: new Date(e.target.value)
