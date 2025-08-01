@@ -269,56 +269,70 @@ function isVideoUrl(url: string): boolean {
                   key={cls.id}
                   variant={index === currentClassIndex ? "default" : "outline"}
                   onClick={() => setCurrentClassIndex(index)}
-                  className="w-full justify-start"
+                  className="w-full justify-start break-words text-left whitespace-normal"
                 >
                   {cls.title}
                 </Button>
               ))}
             </div>
 
-            {/* Right: video or link */}
-            <div className="md:col-span-2 space-y-4">
-              <h3 className="text-lg font-semibold">
-                {selectedCourseClasses[currentClassIndex]?.title}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {selectedCourseClasses[currentClassIndex]?.description}
-              </p>
+          
+          {/* Middle: video player or link */}
+        <div className="md:col-span-2 space-y-4">
+          <h3 className="text-lg font-semibold">
+            {selectedCourseClasses[currentClassIndex]?.title}
+          </h3>
 
-              {(() => {
-                const url = selectedCourseClasses[currentClassIndex]?.video_url;
-                if (!url) {
-                  return <p className="text-sm text-muted-foreground">Sem recurso</p>;
-                }
+          {(() => {
+            const url = selectedCourseClasses[currentClassIndex]?.video_url;
+            if (!url) {
+              return <p className="text-sm text-muted-foreground">Sem recurso</p>;
+            }
 
-                if (isVideoUrl(url)) {
-                  return (
-                    <div className="aspect-video">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={getEmbedUrl(url)}
-                        title="Vídeo da aula"
-                        frameBorder="0"
-                        allowFullScreen
-                        className="w-full h-full rounded-md"
-                      />
-                    </div>
-                  );
-                }
+            if (isVideoUrl(url)) {
+              return (
+                <div className="aspect-video">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={getEmbedUrl(url)}
+                    title="Vídeo da aula"
+                    frameBorder="0"
+                    allowFullScreen
+                    className="w-full h-full rounded-md"
+                  />
+                </div>
+              );
+            }
 
-                return (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block text-primary hover:underline break-words"
-                  >
-                    {url}
-                  </a>
-                );
-              })()}
-            </div>
+            return (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  inline-block mt-2
+                  text-primary hover:text-primary-dark
+                  underline
+                  break-words
+                  max-w-full
+                  truncate
+                  hover:underline
+                  transition
+                  cursor-pointer
+                "
+                title={url}
+              >
+                {url}
+              </a>
+            );
+          })()}
+
+          <p className="text-sm text-muted-foreground">
+            {selectedCourseClasses[currentClassIndex]?.description}
+          </p>
+        </div>
+
           </div>
         )}
       </CardContent>

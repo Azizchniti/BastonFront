@@ -143,10 +143,13 @@ useEffect(() => {
     }
 
     if (isEditingCourse && newCourse.id) {
+      const { imageFile, ...courseData } = newCourse;
+
       const updated = await EducationService.updateCourse(newCourse.id, {
-        ...newCourse,
+        ...courseData,
         image_url: imageUrl ?? newCourse.image_url,
       });
+
       setCourses((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       toast.success("Curso atualizado com sucesso!");
     } else {
@@ -174,11 +177,20 @@ useEffect(() => {
 };
 
 
-  const handleEditCourse = (course: Course) => {
-    setNewCourse(course);
-    setIsEditingCourse(true);
-    setCourseDialogOpen(true);
-  };
+ const handleEditCourse = (course: Course) => {
+  setNewCourse({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    duration: course.duration,
+    classes: course.classes,
+    image_url: course.image_url,
+    imageFile: undefined,
+  });
+  setIsEditingCourse(true);
+  setCourseDialogOpen(true);
+};
+
 
 const handleDeleteCourse = async (id: string) => {
   try {
@@ -631,21 +643,19 @@ function getEmbedUrl(url: string): string {
                   key={cls.id}
                   variant={index === currentClassIndex ? "default" : "outline"}
                   onClick={() => setCurrentClassIndex(index)}
-                  className="w-full justify-start"
+                  className="w-full justify-start break-words text-left whitespace-normal"
                 >
                   {cls.title}
                 </Button>
               ))}
             </div>
 
+          
             {/* Middle: video player or link */}
             <div className="md:col-span-2 space-y-4">
               <h3 className="text-lg font-semibold">
                 {selectedCourseClasses[currentClassIndex]?.title}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                {selectedCourseClasses[currentClassIndex]?.description}
-              </p>
 
               {(() => {
                 const url = selectedCourseClasses[currentClassIndex]?.video_url;
@@ -653,48 +663,50 @@ function getEmbedUrl(url: string): string {
                   return <p className="text-sm text-muted-foreground">Sem recurso</p>;
                 }
 
-          if (isVideoUrl(url)) {
-            // Only show iframe if it's a video
-            return (
-              <div className="aspect-video">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={getEmbedUrl(url)}
-                  title="Vídeo da aula"
-                  frameBorder="0"
-                  allowFullScreen
-                  className="w-full h-full rounded-md"
-                />
-              </div>
-            );
-          }
+                if (isVideoUrl(url)) {
+                  return (
+                    <div className="aspect-video">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={getEmbedUrl(url)}
+                        title="Vídeo da aula"
+                        frameBorder="0"
+                        allowFullScreen
+                        className="w-full h-full rounded-md"
+                      />
+                    </div>
+                  );
+                }
 
-          // Otherwise, just show clickable URL
-          return (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              inline-block mt-2
-              text-primary hover:text-primary-dark
-              underline
-              break-words
-              max-w-full
-              truncate
-              hover:underline
-              transition
-              cursor-pointer
-            "
-            title={url} // shows full URL on hover
-          >
-            {url}
-          </a>
-        );
+                return (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+                      inline-block mt-2
+                      text-primary hover:text-primary-dark
+                      underline
+                      break-words
+                      max-w-full
+                      truncate
+                      hover:underline
+                      transition
+                      cursor-pointer
+                    "
+                    title={url}
+                  >
+                    {url}
+                  </a>
+                );
+              })()}
 
-        })()}
-      </div>
+              <p className="text-sm text-muted-foreground">
+                {selectedCourseClasses[currentClassIndex]?.description}
+              </p>
+            </div>
+
     </div>
   )}
 </CardContent>
