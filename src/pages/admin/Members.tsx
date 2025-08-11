@@ -269,6 +269,11 @@ const handleAddMember = async () => {
     console.error(error);
   }
 };
+const userById = React.useMemo(() => {
+  const map = new Map();
+  users.forEach(user => map.set(user.id, user));
+  return map;
+}, [users]);
 
 
   // Editar um membro existente
@@ -602,7 +607,7 @@ const handleDeleteUser = async (userId: string) => {
                       {getSortIcon('first_name')}
                     </div>
                   </TableHead>
-                  <TableHead>CPF</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
                   <TableHead 
                     className="cursor-pointer"
@@ -635,21 +640,23 @@ const handleDeleteUser = async (userId: string) => {
                 </TableRow>
               </TableHeader>
               
-              <TableBody>
-                {members.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <User className="h-10 w-10 mb-2" />
-                        <p>Nenhum membro encontrado</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  members.map((member) => (
+            <TableBody>
+              {members.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <User className="h-10 w-10 mb-2" />
+                      <p>Nenhum membro encontrado</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                members.map((member) => {
+                  const user = userById.get(member.id); // find corresponding user/profile
+                  return (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.first_name+" "+member.last_name}</TableCell>
-                      <TableCell>{member.cpf}</TableCell>
+                      <TableCell className="font-medium">{member.first_name + " " + member.last_name}</TableCell>
+                      <TableCell>{user ? user.email : '—'}</TableCell>
                       <TableCell>{member.phone}</TableCell>
                       <TableCell>
                         <Badge className={`${gradeColors[member.grade]}`}>
@@ -659,7 +666,7 @@ const handleDeleteUser = async (userId: string) => {
                       <TableCell className="text-right">
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
-                          currency: 'BRL'
+                          currency: 'BRL',
                         }).format(member.total_sales)}
                       </TableCell>
                       <TableCell className="text-right">{member.total_contacts}</TableCell>
@@ -682,9 +689,11 @@ const handleDeleteUser = async (userId: string) => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
+                  );
+                })
+              )}
+            </TableBody>
+
             </Table>
           </div>
         </CardContent>
