@@ -386,7 +386,6 @@ function isVideoUrl(url: string): boolean {
             {selectedCourseClasses[currentClassIndex]?.description}
           </p>
 
-          // Inside your course content rendering (right after the video player)
 
           <div className="mt-6 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200">
             <h4 className="text-lg font-semibold mb-4 flex items-center">
