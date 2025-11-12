@@ -1,264 +1,233 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useData } from "@/contexts/DataContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Phone, Users, BarChart3, DollarSign, Hash } from "lucide-react";
-import { useMemberContext } from "@/contexts/MemberContext";
-import { MemberService } from "@/services/members.service";
+import {
+  Building2,
+  Hash,
+  Mail,
+  UserCircle2,
+  ClipboardEdit,
+  CheckCircle2,
+  XCircle,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 import { toast } from "sonner";
-import { Member } from "@/types";
-
-const gradeColors: Record<string, string> = {
-  beginner: "bg-gray-200 text-gray-800",
-  standard: "bg-blue-200 text-blue-800",
-  gold: "bg-yellow-300 text-yellow-900",
-  platinum: "bg-slate-300 text-slate-800",
-  diamond: "bg-purple-300 text-purple-900",
-};
+import { User as UserType } from "@/types";
+import { UserService } from "@/services/user.service";
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
-  const [member, setCurrentMember] = useState<Member | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const token = user.token;
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+  const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
-const [editedCPF, setEditedCPF] = useState('');
-const [editedPhone, setEditedPhone] = useState('');
 
-console.log("user.id:", user?.id);
-useEffect(() => {
-  const fetchMember = async () => {
-    if (user?.id) {
-      try {
-        const memberData = await MemberService.getMemberById(user.id);
-        setCurrentMember(memberData);
-        setEditedCPF(memberData.cpf || '');
-        setEditedPhone(memberData.phone || '');
+  // Editable fields
+  const [editedFirstName, setEditedFirstName] = useState("");
+  const [editedLastName, setEditedLastName] = useState("");
+  const [editedEmail, setEditedEmail] = useState("");
+  const [editedCPF, setEditedCPF] = useState("");
+  const [editedDepartment, setEditedDepartment] = useState("");
 
-      } catch (err) {
-        console.error("Failed to fetch member:", err);
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (user?.id && token) {
+        try {
+          const userData = await UserService.getUserById(user.id, token);
+          setCurrentUser(userData);
+          setEditedFirstName(userData.first_name || "");
+          setEditedLastName(userData.last_name || "");
+          setEditedEmail(userData.email || "");
+          setEditedCPF(userData.cpf || "");
+          setEditedDepartment(userData.department || "");
+        } catch (err) {
+          console.error("Failed to fetch user:", err);
+        } finally {
+          setLoading(false);
+        }
       }
-    }
-  };
+    };
+    fetchUser();
+  }, [user?.id, token]);
 
-  fetchMember();
-}, [user?.id]);
-
-
-  if (!member) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground">
-        Carregando informações do membro...
+      <div className="flex items-center justify-center h-64 text-gray-500 animate-pulse">
+        Carregando informações do usuário...
       </div>
     );
   }
 
+  if (!currentUser) return null;
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-2">
-      {/* Header */}
-    <div className="flex flex-col items-center gap-2">
-  <div className="relative w-24 h-24">
-    {member.profile_picture ? (
-      <img
-        src={member.profile_picture}
-        alt="Profile"
-        className="w-24 h-24 rounded-full object-cover"
-      />
-    ) : (
-      <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
-        {member.first_name[0]}
-      </div>
-    )}
-
-    {/* Hidden input */}
-    <input
-      id="file-upload"
-      type="file"
-      accept="image/*"
-      className="hidden"
-      onChange={async (e) => {
-        if (!e.target.files || e.target.files.length === 0 || !user) return;
-        const file = e.target.files[0];
-        try {
-          const result = await MemberService.uploadProfilePicture(user.id, file);
-          toast.success("Foto de perfil atualizada!");
-          const updated = await MemberService.getMemberById(user.id);
-          setCurrentMember(updated);
-        } catch (err) {
-          toast.error("Erro ao enviar a imagem.");
-          console.error(err);
-        }
-      }}
-    />
-
-    {/* Plus button label */}
-    <label
-      htmlFor="file-upload"
-      className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-lg border-2 border-white"
-      title="Alterar foto"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={3}
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </label>
-  </div>
-
-        <div className="space-y-1 text-center sm:text-left">
-          <h1 className="text-2xl font-bold">
-            {member.first_name} {member.last_name}
-          </h1>
-          <div className="flex justify-center sm:justify-start gap-2">
-            <Badge className={gradeColors[member.grade]}>
-              {member.grade.charAt(0).toUpperCase() + member.grade.slice(1)}
-            </Badge>
+    <div className="max-w-5xl mx-auto px-6 py-12 font-[TT Commons Pro]">
+      {/* HEADER SECTION */}
+      <div className="relative flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10 p-6 rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-800 text-white shadow-lg">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="p-[3px] bg-gradient-to-br from-white/40 to-white/10 rounded-full">
+            <div className="bg-white/10 backdrop-blur-sm rounded-full p-2">
+              <UserCircle2 className="w-20 h-20 text-white opacity-90" />
+            </div>
           </div>
-          {/* <p className="text-muted-foreground text-sm">ID: {member.id}</p> */}
+          <div className="text-center sm:text-left space-y-1">
+            {editMode ? (
+              <div className="flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
+                <input
+                  type="text"
+                  value={editedFirstName}
+                  onChange={(e) => setEditedFirstName(e.target.value)}
+                  className="text-gray-900 rounded-md px-3 py-1 text-center sm:text-left"
+                  placeholder="Nome"
+                />
+                <input
+                  type="text"
+                  value={editedLastName}
+                  onChange={(e) => setEditedLastName(e.target.value)}
+                  className="text-gray-900 rounded-md px-3 py-1 text-center sm:text-left"
+                  placeholder="Sobrenome"
+                />
+              </div>
+            ) : (
+              <h1 className="text-3xl font-bold tracking-tight">
+                {currentUser.first_name} {currentUser.last_name}
+              </h1>
+            )}
+
+            {editMode ? (
+              <input
+                type="email"
+                value={editedEmail}
+                onChange={(e) => setEditedEmail(e.target.value)}
+                className="text-gray-900 rounded-md px-3 py-1 w-full text-center sm:text-left"
+                placeholder="Email"
+              />
+            ) : (
+              <p className="text-sm opacity-90">{currentUser.email}</p>
+            )}
+
+            <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
+              <span className="bg-white/20 backdrop-blur-md text-sm px-3 py-1 rounded-full border border-white/30 font-medium">
+                {currentUser.role === "admin" ? "Administrador" : "Usuário"}
+              </span>
+              <span className="bg-blue-500/40 backdrop-blur-md text-sm px-3 py-1 rounded-full border border-white/20 font-medium flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5" /> {currentUser.department}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Separator />
+      {/* INFO SECTION */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+        {/* CPF */}
+        <Card className="shadow-lg border border-slate-200 bg-white/70 backdrop-blur-sm hover:shadow-2xl transition">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+              <Hash className="w-4 h-4 text-blue-600" /> CPF
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {editMode ? (
+              <input
+                type="text"
+                value={editedCPF}
+                onChange={(e) => setEditedCPF(e.target.value)}
+                className="w-full text-center py-2 border rounded-lg border-blue-300 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
+                placeholder="Digite seu CPF"
+              />
+            ) : (
+              <p className="text-lg font-semibold text-center text-gray-800">
+                {currentUser.cpf || "—"}
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Info Grid */}
- {/* Info Grid */}
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-  <Card>
-  <CardHeader className="flex justify-between items-center pb-2">
-    <CardTitle className="text-sm font-medium">CPF</CardTitle>
-    <Hash className="w-4 h-4 text-muted-foreground" />
-  </CardHeader>
-  <CardContent className="text-center">
-    {editMode ? (
-     <div className="flex justify-center">
-        <input
-          type="text"
-          value={editedCPF}
-          onChange={(e) => setEditedCPF(e.target.value)}
-          placeholder="Digite seu CPF"
-          className="text-center w-full max-w-xs px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
-        />
-  </div>
+        {/* DEPARTMENT */}
+        <Card className="shadow-lg border border-slate-200 bg-white/70 backdrop-blur-sm hover:shadow-2xl transition">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+              <Building2 className="w-4 h-4 text-indigo-600" /> Departamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {editMode ? (
+              <input
+                type="text"
+                value={editedDepartment}
+                onChange={(e) => setEditedDepartment(e.target.value)}
+                className="w-full text-center py-2 border rounded-lg border-indigo-300 focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"
+                placeholder="Digite o departamento"
+              />
+            ) : (
+              <div className="flex justify-center">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium">
+                  <ShieldCheck className="w-4 h-4" /> {currentUser.department}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-    ) : (
-      <p className="text-lg font-semibold">{member.cpf}</p>
-    )}
-  </CardContent>
-</Card>
-
-<Card>
-  <CardHeader className="flex justify-between items-center pb-2">
-    <CardTitle className="text-sm font-medium">Telefone</CardTitle>
-    <Phone className="w-4 h-4 text-muted-foreground" />
-  </CardHeader>
-  <CardContent className="text-center">
-    {editMode ? (
-      <div className="flex justify-center">
-        <input
-          type="text"
-          value={editedPhone}
-          onChange={(e) => setEditedPhone(e.target.value)}
-          placeholder="Digite seu telefone"
-          className="text-center w-full max-w-xs px-3 py-2 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm"
-        />
-    </div>
-
-    ) : (
-      <p className="text-lg font-semibold">{member.phone}</p>
-    )}
-  </CardContent>
-</Card>
-
-</div>
-
-{/* Stats Grid */}
-<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-  <Card className="bg-green-100">
-    <CardHeader className="flex justify-between items-center pb-2">
-      <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
-      <DollarSign className="w-5 h-5 text-green-800" />
-    </CardHeader>
-    <CardContent className="text-center">
-      <p className="text-xl font-bold text-green-900">
-        R$ {member.total_sales.toFixed(2)}
-      </p>
-    </CardContent>
-  </Card>
-
-  <Card className="bg-blue-100">
-    <CardHeader className="flex justify-between items-center pb-2">
-      <CardTitle className="text-sm font-medium">Contatos Totais</CardTitle>
-      <Users className="w-5 h-5 text-blue-800" />
-    </CardHeader>
-    <CardContent className="text-center">
-      <p className="text-xl font-bold text-blue-900">{member.total_contacts}</p>
-    </CardContent>
-  </Card>
-
-  <Card className="bg-purple-100">
-    <CardHeader className="flex justify-between items-center pb-2">
-      <CardTitle className="text-sm font-medium">Comissões Totais</CardTitle>
-      <BarChart3 className="w-5 h-5 text-purple-800" />
-    </CardHeader>
-    <CardContent className="text-center">
-      <p className="text-xl font-bold text-purple-900">
-        R$ {member.total_commission.toFixed(2)}
-      </p>
-    </CardContent>
-  </Card>
-</div>
-<div className="flex justify-end mt-4 gap-2">
-  {editMode ? (
-    <>
-      <button
-        onClick={async () => {
-          try {
-            const updated = await MemberService.updateMember(member.id, {
-              cpf: editedCPF,
-              phone: editedPhone,
-            });
-            toast.success("Dados atualizados com sucesso!");
-            setCurrentMember(updated);
-            setEditMode(false);
-          } catch (error) {
-            toast.error("Erro ao atualizar dados.");
-            console.error(error);
-          }
-        }}
-        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
-      >
-        💾 Salvar
-      </button>
-      <button
-        onClick={() => {
-          setEditedCPF(member.cpf);
-          setEditedPhone(member.phone);
-          setEditMode(false);
-        }}
-        className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition"
-      >
-        ❌ Cancelar
-      </button>
-    </>
-  ) : (
-    <button
-      onClick={() => setEditMode(true)}
-      className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md shadow-sm transition"
-    >
-       Editar Dados
-    </button>
-  )}
-</div>
-
-
+      {/* ACTION BUTTONS */}
+      <div className="flex justify-end mt-8 gap-3">
+        {editMode ? (
+          <>
+            <button
+              onClick={async () => {
+                if (!token) return;
+                try {
+                  const updated = await UserService.updateUser(
+                    currentUser.id,
+                    {
+                      first_name: editedFirstName,
+                      last_name: editedLastName,
+                      email: editedEmail,
+                      cpf: editedCPF,
+                      department: editedDepartment,
+                    },
+                    token
+                  );
+                  toast.success("Dados atualizados com sucesso!");
+                  setCurrentUser(updated);
+                  setEditMode(false);
+                } catch (error) {
+                  toast.error("Erro ao atualizar dados.");
+                  console.error(error);
+                }
+              }}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition"
+            >
+              <CheckCircle2 className="w-4 h-4" /> Salvar
+            </button>
+            <button
+              onClick={() => {
+                setEditedFirstName(currentUser.first_name);
+                setEditedLastName(currentUser.last_name);
+                setEditedEmail(currentUser.email);
+                setEditedCPF(currentUser.cpf);
+                setEditedDepartment(currentUser.department);
+                setEditMode(false);
+              }}
+              className="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition"
+            >
+              <XCircle className="w-4 h-4" /> Cancelar
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => setEditMode(true)}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium px-5 py-2.5 rounded-md shadow-sm transition"
+          >
+            <ClipboardEdit className="w-4 h-4" /> Editar Dados
+          </button>
+        )}
+      </div>
     </div>
   );
 };

@@ -42,147 +42,94 @@ import {
   Plus, 
   Search, 
   Trash2, 
-  User, 
   UserPlus 
 } from "lucide-react";
-import { MemberService } from "@/services/members.service";
-import { useData } from "@/contexts/DataContext";
+
+
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Member } from "@/types/member.types";
-import { MemberGrade, profile } from "@/types";
+import { MemberGrade } from "@/types";
 import axios from "axios";
 import { signUp } from "@/services/auth-service";
 import { UserService } from "@/services/user.service";
+import type { User } from "@/types/user.types";
+import { useData } from "@/contexts/DataContext";
+import supabase from "@/integrations/supabase/client";
 
-const gradeColors = {
-  beginner: "bg-slate-500",
-  silver: "bg-blue-500",
-  gold: "bg-yellow-500",
-  platinum: "bg-violet-500",
-  diamond: "bg-emerald-500"
-};
-
-const gradeLabels = {
-  beginner: "Beginner",
-  silver: "Silver",
-  gold: "Gold",
-  platinum: "Platinum",
-  diamond: "Diamond"
-};
-
-const MembersPage = () => {
-const [members, setMembers] = useState<Member[]>([]);
-const [users, setUsers] = useState<profile[]>([]);
- const [loading, setLoading] = useState<boolean>(true);
+  const MembersPage = () => {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const {  updateMember, deleteMember } = useData();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
+  const [selectedMember, setSelectedMember] = useState<User | null>(null);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Member | null;
     direction: 'ascending' | 'descending';
   }>({ key: null, direction: 'ascending' });
 
+  const loadUsers = async () => {
+  if (!user?.token) {
+    console.error("No token found");
+    return;
+  }
 
-  const loadMembersAndUsers = async () => {
-    setLoading(true); // optional: only set once
-    try {
-      const [memberData, userData] = await Promise.all([
-        MemberService.getAllMembers(),
-        UserService.getAllUsers(),
-      ]);
-
-      setMembers(memberData);
-      setUsers(userData);
-    } catch (error) {
-      toast.error("Erro ao buscar membros ou usuários");
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const userData = await UserService.getAllUsers(user.token);
+    setUsers(userData);
+  } catch (error) {
+    console.error(error);
+    toast.error("Erro ao buscar usuários");
+  } finally {
+    setLoading(false);
+  }
+};
 useEffect(() => {
-  loadMembersAndUsers();
+  const fetchDepartments = async () => {
+    const { data, error } = await supabase.from("departments").select("*");
+    if (!error && data) setDepartments(data);
+  };
+  fetchDepartments();
 }, []);
-const admins = users.filter(u => u.role !== "member");
-
- const loadPendingMembers = async () => {
-    setLoading(true);
-    try {
-      const data = await MemberService.getMembersByStatus("pending");
-      setPendingMembers(data);
-    } catch (error) {
-      toast.error("Erro ao buscar membros pendentes");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadPendingMembers();
-  }, []);
-
-  const handleApprove = async (id: string) => {
-    try {
-      await MemberService.approveMember(id);
-       toast.success("Membro aprovado com sucesso", { duration: 4000 });
-      loadPendingMembers(); // refresh list
-    } catch (error) {
-      toast.error("Erro ao aprovar membro");
-    }
-  };
-
-  const handleReject = async (id: string) => {
-    try {
-      await MemberService.rejectMember(id);
-      toast.success("Membro rejeitado com sucesso", { duration: 4000 });
-      loadPendingMembers(); // refresh list
-    } catch (error) {
-      toast.error("Erro ao rejeitar membro");
-    }
-  };
 
 
+useEffect(() => {
+  if (!authLoading && user?.token) {
+    loadUsers();
+  }
+}, [user, authLoading]);
+
+const admins = users.filter(u => u.role === "admin");
+const regularUsers = users.filter(u => u.role === "user");
 
   // Formulário para novo membro
-const [formData, setFormData] = useState({
+interface FormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  role: "user" | "admin"; // ✅ restricts to the correct literal type
+  department: string;
+  cpf: string;
+}
+
+const [formData, setFormData] = useState<FormData>({
   first_name: "",
   last_name: "",
   email: "",
   password: "",
+  role: "user",
+  department: "",
   cpf: "",
-  grade: "",  
-  phone: "",
-  role: "member", // Default
 });
 
-  // Filtrar membros baseado na busca
-  // const filteredMembers = members.filter(member => 
-  //   // member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //   // member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //   member.cpf.includes(searchTerm)
-  // );
-
-  // Ordenar membros
-  // const sortedMembers = React.useMemo(() => {
-  //   let sortableMembers = [...filteredMembers];
-  //   if (sortConfig.key !== null) {
-  //     sortableMembers.sort((a, b) => {
-  //       if (a[sortConfig.key!] < b[sortConfig.key!]) {
-  //         return sortConfig.direction === 'ascending' ? -1 : 1;
-  //       }
-  //       if (a[sortConfig.key!] > b[sortConfig.key!]) {
-  //         return sortConfig.direction === 'ascending' ? 1 : -1;
-  //       }
-  //       return 0;
-  //     });
-  //   }
-  //   return sortableMembers;
-  // }, [filteredMembers, sortConfig]);
 
   const requestSort = (key: keyof Member) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -226,49 +173,46 @@ const [formData, setFormData] = useState({
   email: "",
   password: "",
   cpf: "",
-  grade:"",
-  phone: "",
-  role: "member", // Default
+  role: "user",
+  department:"" // Default
     });
   };
 
   // Adicionar um novo membro
 const handleAddMember = async () => {
-  
-  const { first_name, last_name, email, password, role, cpf, phone } = formData;
+  const { first_name, last_name, email, password, role,department, cpf } = formData;
 
-  if (!first_name || !last_name || !email || !password) {
+  if (!first_name || !last_name || !email || !password || !cpf) {
     toast.error("Preencha todos os campos obrigatórios");
     return;
   }
-  console.log("Submitting formData:", formData);
-
 
   try {
     const newUser = await signUp(
+      first_name,
+      last_name,
       email,
       password,
       role,
-      first_name,
-      last_name,
-      null,
+      department, // or your department field if available
       cpf,
-      phone
+      user.token // ✅ admin token for authorization
     );
 
     if (newUser) {
-      toast.success("Membro criado com sucesso. Verifique o email de ativação.");
+      toast.success("Membro criado com sucesso!");
       resetForm();
       setAddDialogOpen(false);
-        await loadPendingMembers();
+      await loadUsers(); // refresh user list
     } else {
-      toast.error("Erro ao criar membro. Verifique os dados e tente novamente.");
+      toast.error("Erro ao criar membro.");
     }
   } catch (error) {
-    toast.error("Erro inesperado ao criar membro.");
+    toast.error("Erro ao criar membro. Verifique se o token é válido ou se há conflito no email.");
     console.error(error);
   }
 };
+
 const userById = React.useMemo(() => {
   const map = new Map();
   users.forEach(user => map.set(user.id, user));
@@ -280,7 +224,7 @@ const userById = React.useMemo(() => {
   const handleEditMember = async () => {
   if (!selectedMember) return;
 
-  if (!formData.first_name || !formData.last_name || !formData.cpf || !formData.phone) {
+  if (!formData.first_name || !formData.last_name || !formData.cpf ) {
     toast.error("Preencha todos os campos obrigatórios");
     return;
   }
@@ -291,14 +235,13 @@ const userById = React.useMemo(() => {
       first_name: formData.first_name,
       last_name: formData.last_name,
       cpf: formData.cpf,
-      phone: formData.phone,
-      grade: formData.grade
+
     });
 
     toast.success("Membro atualizado com sucesso");
     
     // Refresh the members list (you need to expose this function outside useEffect)
-    await loadMembersAndUsers();
+    await loadUsers();
 
     setEditDialogOpen(false);
     setSelectedMember(null);
@@ -309,20 +252,21 @@ const userById = React.useMemo(() => {
   }
 };
 
+
   // Excluir um membro
 const handleDeleteMember = async () => {
   if (!selectedMember && !selectedUserId) return;
 
   try {
     if (selectedMember) {
-      await UserService.deleteUser(selectedMember.id);
+      await UserService.deleteUser(selectedMember.id,user.token);
       toast.success("Membro excluído com sucesso");
     } else if (selectedUserId) {
-      await UserService.deleteUser(selectedUserId);
+      await UserService.deleteUser(selectedUserId,user.token);
       toast.success("Administrador excluído com sucesso");
     }
 
-    await loadMembersAndUsers(); // Refresh both lists
+    await loadUsers(); // Refresh both lists
     setDeleteDialogOpen(false);
     setSelectedMember(null);
     setSelectedUserId(null);
@@ -336,7 +280,7 @@ const handleDeleteMember = async () => {
 
 
   // Preparar para editar um membro
-  const handleEditDialogOpen = (member: Member) => {
+  const handleEditDialogOpen = (member: User) => {
   setSelectedMember(member);
   setFormData({
     first_name: member.first_name,
@@ -344,16 +288,15 @@ const handleDeleteMember = async () => {
     email: "",        // default or fetch if available
     password: "",     // keep empty for security
     cpf: member.cpf,
-    phone: member.phone,
-    role: "member",   // or use member.role if available
-    grade: member.grade,
+    role: "user",
+    department: ""   // or use member.role if available
   });
   setEditDialogOpen(true);
 };
 
 
   // Preparar para excluir um membro
-  const handleDeleteDialogOpen = (member: Member) => {
+  const handleDeleteDialogOpen = (member: User) => {
     setSelectedMember(member);
     setDeleteDialogOpen(true);
   };
@@ -368,11 +311,10 @@ const handleDeleteMember = async () => {
   password: "", // keep if you're using it later
   cpf: "",
   grade: "",    // only used for members
-  phone: "",
   role: "admin", // member/admin
 });
 
-const handleEditAdminDialogOpen = (admin: profile) => {
+const handleEditAdminDialogOpen = (admin: User) => {
   setSelectedMember(null); // Clear member
   setSelectedUserId(admin.id); // <-- THIS is missing
 
@@ -383,7 +325,6 @@ const handleEditAdminDialogOpen = (admin: profile) => {
     password: "",       // optional
     cpf: admin.cpf || "",
     grade: "",          // not used for admins
-    phone: admin.phone || "",
     role: admin.role,
   });
 console.log("Editing admin:", admin);
@@ -408,10 +349,9 @@ const handleEditUser = async () => {
       last_name: formPata.last_name,
       email: formPata.email,
       cpf: formPata.cpf,
-      phone: formPata.phone,
-    });
+    },user.token);
     toast.success("Administrador atualizado com sucesso");
-    const refreshedUsers = await UserService.getAllUsers();
+    const refreshedUsers = await UserService.getAllUsers(user.token);
     setUsers(refreshedUsers);
     setEditDialogOpen(false);
     setSelectedUserId(null);
@@ -428,7 +368,6 @@ const resetFormPata = () => {
     password: "",
     cpf: "",
     grade: "",
-    phone: "",
     role: "admin",
   });
 };
@@ -445,7 +384,7 @@ const handleConfirmEdit = () => {
 // Excluir um usuário administrador
 const handleDeleteUser = async (userId: string) => {
   try {
-    await UserService.deleteUser(userId);
+    await UserService.deleteUser(userId,user.token);
     toast.success("Administrador excluído com sucesso");
     setDeleteDialogOpen(false);
   } catch (error) {
@@ -508,17 +447,6 @@ const handleDeleteUser = async (userId: string) => {
         </div>
 
         <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="phone" className="text-right">Telefone</Label>
-          <Input
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            className="col-span-3"
-          />
-        </div>
-
-        <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="email" className="text-right">Email</Label>
           <Input
             id="email"
@@ -543,21 +471,44 @@ const handleDeleteUser = async (userId: string) => {
         </div>
 
 
-        <div className="grid grid-cols-4 items-center gap-4">
+      <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="role" className="text-right">Role</Label>
         <select
           id="role"
           name="role"
           value={formData.role}
-          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              role: e.target.value as "user" | "admin", // ✅ cast to proper type
+            })
+          }
           className="col-span-3 rounded-md border p-2"
         >
-          <option value="member">Membro</option>
+          <option value="user">User</option> 
           <option value="admin">Admin</option>
         </select>
       </div>
-              
-           
+      <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="department" className="text-right">Departamento</Label>
+          <select
+            id="department"
+            name="department"
+            value={formData.department}
+            onChange={(e) =>
+              setFormData({ ...formData, department: e.target.value })
+            }
+            className="col-span-3 rounded-md border p-2"
+          >
+            <option value="">Selecione o departamento</option>
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.name}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
             </div>
             
             <DialogFooter>
@@ -593,110 +544,64 @@ const handleDeleteUser = async (userId: string) => {
           </div>
         </CardHeader>
         
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead 
-                    className="cursor-pointer"
-                    onClick={() => requestSort('first_name')}
-                  >
-                    <div className="flex items-center">
-                      Nome
-                      {getSortIcon('first_name')}
-                    </div>
-                  </TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead 
-                    className="cursor-pointer"
-                    onClick={() => requestSort('grade')}
-                  >
-                    <div className="flex items-center">
-                      Graduação
-                      {getSortIcon('grade')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer text-right"
-                    onClick={() => requestSort('total_sales')}
-                  >
-                    <div className="flex items-center justify-end">
-                      Vendas (R$)
-                      {getSortIcon('total_sales')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer text-right"
-                    onClick={() => requestSort('total_contacts')}
-                  >
-                    <div className="flex items-center justify-end">
-                      Contatos
-                      {getSortIcon('total_contacts')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              
-            <TableBody>
-              {members.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <User className="h-10 w-10 mb-2" />
-                      <p>Nenhum membro encontrado</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                members.map((member) => {
-                  const user = userById.get(member.id); // find corresponding user/profile
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.first_name + " " + member.last_name}</TableCell>
-                      <TableCell>{user ? user.email : '—'}</TableCell>
-                      <TableCell>{member.phone}</TableCell>
-                      <TableCell>
-                        <Badge className={`${gradeColors[member.grade]}`}>
-                          {gradeLabels[member.grade]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        }).format(member.total_sales)}
-                      </TableCell>
-                      <TableCell className="text-right">{member.total_contacts}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleEditDialogOpen(member)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDeleteDialogOpen(member)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
+      <CardContent>
+  <div className="rounded-md border">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="cursor-pointer">
+            Nome
+          </TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>CPF</TableHead>
+          <TableHead>Departamento</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
+        </TableRow>
+      </TableHeader>
 
-            </Table>
-          </div>
-        </CardContent>
+      <TableBody>
+        {regularUsers.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center py-6">
+              <div className="flex flex-col items-center justify-center text-muted-foreground">
+                <UserPlus className="h-10 w-10 mb-2" />
+                <p>Nenhum usuário encontrado</p>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : (
+          regularUsers.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.cpf}</TableCell>
+              <TableCell>{user.department || '—'}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleEditDialogOpen(user)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleDeleteDialogOpen(user)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  </div>
+</CardContent>
+
       </Card>
       <Card className="mt-6">
   <CardHeader>
@@ -719,7 +624,7 @@ const handleDeleteUser = async (userId: string) => {
             <TableRow>
               <TableCell colSpan={3} className="text-center py-6">
                 <div className="flex flex-col items-center justify-center text-muted-foreground">
-                  <User className="h-10 w-10 mb-2" />
+                  <UserPlus className="h-10 w-10 mb-2" />
                   <p>Nenhum administrador encontrado</p>
                 </div>
               </TableCell>
@@ -764,67 +669,6 @@ const handleDeleteUser = async (userId: string) => {
     </div>
   </CardContent>
 </Card>
-  <Card>
-      <CardHeader>
-        <CardTitle>Membros Pendentes</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Sobrenome</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-6">
-                  Carregando membros...
-                </TableCell>
-              </TableRow>
-            ) : pendingMembers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-6">
-                  Nenhum membro pendente encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              pendingMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>{member.first_name}</TableCell>
-                  <TableCell>{member.last_name}</TableCell>
-                  <TableCell>{member.phone}</TableCell>
-                  <TableCell>{member.status}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => handleApprove(member.id)}
-                  >
-                    Aprovar
-                  </Button>
-
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={() => handleReject(member.id)}
-                  >
-                    Rejeitar
-                  </Button>
-
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
       
       {/* Diálogo de Edição */}
     <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -879,43 +723,7 @@ const handleDeleteUser = async (userId: string) => {
         />
       </div>
 
-      {/* Telefone */}
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label className="text-right">Telefone</Label>
-        <Input
-          name="phone"
-          value={selectedMember ? formData.phone : formPata.phone}
-          onChange={(e) =>
-            selectedMember
-              ? setFormData({ ...formData, phone: e.target.value })
-              : setFormPata({ ...formPata, phone: e.target.value })
-          }
-        />
-      </div>
 
-      {/* Grau (only for member) */}
-      {selectedMember && (
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label className="text-right">Grau</Label>
-          <Select
-            value={formData.grade}
-            onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, grade: value as MemberGrade }))
-            }
-          >
-            <SelectTrigger className="col-span-3">
-              <SelectValue placeholder="Selecione o grau" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="beginner">Start</SelectItem>
-              <SelectItem value="standard">Standard</SelectItem>
-              <SelectItem value="gold">Gold</SelectItem>
-              <SelectItem value="platinum">Platinum</SelectItem>
-              <SelectItem value="diamond">Diamond</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
     </div>
 
     <DialogFooter>

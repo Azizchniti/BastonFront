@@ -11,7 +11,7 @@ const Index: React.FC = () => {
     if (!isLoading && user) {
       if (user.role === "admin") {
         navigate("/admin");
-      } else if (user.role === "member") {
+      } else if (user.role === "user") {
         navigate("/member");
       }
     } else if (!isLoading && !user) {

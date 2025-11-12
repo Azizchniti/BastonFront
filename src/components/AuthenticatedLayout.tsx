@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "member" | undefined;
+  requiredRole?: "admin" | "user" | undefined;
 }
 
 const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({

@@ -1,26 +1,63 @@
-// src/services/lead.service.ts
+import { User } from "@/types/user.types";
+import axios from "axios";
 
-import { profile } from '@/types';
-import axios from 'axios';
-// Base URL to match Express route: /api/users
-const API_URL = 'https://pfp-backend-0670.onrender.com/api/users';
+//const API_URL = "http://localhost:5000/api/users";
+const API_URL = 'http://91.99.48.218:5000/api/users';
 
 export const UserService = {
-  // ✅ Get all users
-  async getAllUsers(): Promise<profile[]> {
-    const response = await axios.get(`${API_URL}/listallusers`);
+  async getAllUsers(token: string): Promise<User[]> {
+    const response = await axios.get(`${API_URL}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
   },
 
-  // ✅ Update user by ID
-  async updateUser(id: string, updatedData: Partial<profile>): Promise<profile> {
-    const response = await axios.put(`${API_URL}/updateuser/${id}`, updatedData);
-    return response.data[0]; // Supabase returns an array in `.select()`
+  async getUserById(id: string, token: string): Promise<User> {
+    const response = await axios.get(`${API_URL}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
   },
 
-  // ✅ Delete user by ID
-  async deleteUser(id: string): Promise<{ message: string }> {
-    const response = await axios.delete(`${API_URL}/deleteuser/${id}`);
+async updateUser(id: string, updatedData: Partial<User>, token: string): Promise<User> {
+  const response = await axios.put(`${API_URL}/${id}`, updatedData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  // ✅ Return the user object directly
+  return response.data;
+}
+,
+
+  async deleteUser(id: string, token: string): Promise<{ message: string }> {
+    const response = await axios.delete(`${API_URL}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response.data;
-  }
+  },
+    async getUserTasks(id: string, token: string) {
+    const response = await axios.get(`${API_URL}/${id}/tasks`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data; // this will be an array of tasks
+  },
+// src/services/user.service.ts (add)
+async getUsersByDepartment(deptId: string, token: string) {
+  const response = await axios.get(`${API_URL}/department/${deptId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+},
+
 };

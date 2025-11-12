@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { DataProvider } from "@/contexts/DataContext";
+
 import AuthenticatedLayout from "@/components/AuthenticatedLayout";
 
 // Pages
@@ -14,32 +14,23 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
-import AdminDashboard from "./pages/admin/Dashboard";
+
 import AdminMembers from "./pages/admin/Members";
-import AdminLeads from "./pages/admin/Leads";
-import AdminLeadsKanban from "./pages/admin/LeadsKanban";
-import AdminSquads from "./pages/admin/Squads";
-import AdminCommissions from "./pages/admin/Commissions";
-import AdminGraduation from "./pages/admin/Graduation";
-import AdminMural from "./pages/admin/Mural";
+import AdminChamadas from "./pages/admin/Chamadas";
 
 
 
 // Member pages
-import MemberDashboard from "./pages/member/Dashboard";
-import MemberMembers from "./pages/member/Members";
-import MemberCommissions from "./pages/member/Commissions";
-import MemberLeads from "./pages/member/Leads";
-import NewLead from "./pages/member/NewLead";
-import MemberMural from "./pages/member/Mural";
-import RankingPage from "./pages/member/Ranking";
+
 import ProfilePage from "./pages/member/Profile";
-import MemberGraduation from "./pages/member/Graduation";
+import UserChamadas from "./pages/member/Chamadas";
+import UserMessaging from "./pages/member/Messaging";
 
 import Signup from "./pages/Signup";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
+import { DataProvider } from "./contexts/DataContext";
 
 const queryClient = new QueryClient();
 
@@ -47,7 +38,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <DataProvider>
+    
+    
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -60,78 +52,32 @@ const App = () => (
                 <Route path="/sendemail" element={<ForgotPassword />} />
               
               {/* Admin routes */}
-              <Route 
-                path="/admin" 
-                element={
-                  <AuthenticatedLayout requiredRole="admin">
-                    <AdminDashboard />
-                  </AuthenticatedLayout>
-                } 
-              />
+            
 
               <Route 
                 path="/admin/members" 
                 element={
                   <AuthenticatedLayout requiredRole="admin">
-                    <AdminMembers />
+                    <DataProvider>
+                        <AdminMembers />
+                  </DataProvider>
                   </AuthenticatedLayout>
                 } 
               />
 
+
+           
+
               <Route 
-                path="/admin/leads"
+                path="/admin/chamados" 
                 element={
                   <AuthenticatedLayout requiredRole="admin">
-                    <AdminLeads />
-                  </AuthenticatedLayout>
-                } 
-              />
-              <Route 
-                path="/admin/leadsKanban"
-                element={
-                  <AuthenticatedLayout requiredRole="admin">
-                    <AdminLeadsKanban />
+                    <AdminChamadas />
                   </AuthenticatedLayout>
                 } 
               />
 
-              <Route 
-                path="/admin/squads" 
-                element={
-                  <AuthenticatedLayout requiredRole="admin">
-                    <AdminSquads />
-                  </AuthenticatedLayout>
-                } 
-              />
-
-              <Route 
-                path="/admin/commissions" 
-                element={
-                  <AuthenticatedLayout requiredRole="admin">
-                    <AdminCommissions />
-                  </AuthenticatedLayout>
-                } 
-              />
-
-              <Route 
-                path="/admin/graduation" 
-                element={
-                  <AuthenticatedLayout requiredRole="admin">
-                    <AdminGraduation />
-                  </AuthenticatedLayout>
-                } 
-              />
-
-              <Route 
-                path="/admin/mural" 
-                element={
-                  <AuthenticatedLayout requiredRole="admin">
-                  <AnnouncementProvider>
-                    <AdminMural />
-                </AnnouncementProvider>
-                  </AuthenticatedLayout>
-                } 
-              />
+             
 
               <Route 
                 path="/admin/reports" 
@@ -143,103 +89,52 @@ const App = () => (
               />
               
               {/* Member routes */}
-              <Route 
-                path="/member" 
-                element={
-                  <AuthenticatedLayout requiredRole="member" >
-                    <MemberDashboard />
-                  </AuthenticatedLayout>
-                } 
-              />
+        
 
               <Route 
-                path="/member/profile" 
+                path="/user/profile" 
                 element={
-                  <AuthenticatedLayout requiredRole="member" >
+                  <AuthenticatedLayout requiredRole="user" >
                     <ProfilePage/>
                   </AuthenticatedLayout>
                 } 
               />
 
               <Route 
-                path="/member/leads" 
+                path="/user/chamados" 
                 element={
-                  <AuthenticatedLayout requiredRole="member">
-                    <MemberLeads />
+                  <AuthenticatedLayout requiredRole="user">
+                    <UserChamadas />
+                  </AuthenticatedLayout>
+                } 
+              />
+               <Route 
+                path="/user/messages/:taskId"
+                element={
+                  <AuthenticatedLayout requiredRole="user">
+                    <UserMessaging />
                   </AuthenticatedLayout>
                 } 
               />
 
-              <Route 
-                path="/member/leads/new" 
-                element={
-                  <AuthenticatedLayout requiredRole="member">
-                    <NewLead />
-                  </AuthenticatedLayout>
-                } 
-              />
-
-              <Route 
-                path="/member/squad" 
-                element={
-                  <AuthenticatedLayout requiredRole="member">
-                    <MemberMembers />
-                  </AuthenticatedLayout>
-                } 
-              />
 
               <Route 
                 path="/member/member/new" 
                 element={
-                  <AuthenticatedLayout requiredRole="member" >
+                  <AuthenticatedLayout requiredRole="user" >
                     <div>Cadastrar Novo Membro (Membro)</div>
                   </AuthenticatedLayout>
                 } 
               />
 
-              <Route 
-                path="/member/commissions" 
-                element={
-                  <AuthenticatedLayout requiredRole="member">
-                    <MemberCommissions/>
-                  </AuthenticatedLayout>
-                } 
-              />
 
-              <Route 
-                path="/member/ranking" 
-                element={
-                  <AuthenticatedLayout requiredRole="member">
-                    <RankingPage/>
-                  </AuthenticatedLayout>
-                } 
-              />
-              <Route 
-                path="/member/mural" 
-                element={
-                  <AuthenticatedLayout requiredRole="member">
-                    <AnnouncementProvider>
-                      <MemberMural/>
-                    </AnnouncementProvider>
-                  </AuthenticatedLayout>
-                } 
-              />
-
-              <Route 
-                path="/member/grade" 
-                element={
-                  <AuthenticatedLayout requiredRole="member">
-                
-                    <MemberGraduation/>
-                  </AuthenticatedLayout>
-                } 
-              />
+             
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </DataProvider>
+       
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

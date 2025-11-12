@@ -1,137 +1,85 @@
-import { profile } from '@/types';
-import axios from 'axios';
+import { User } from "@/types/user.types";
+import axios from "axios";
 
+//const API_URL = import.meta.env.VITE_API_URL + "/auth";
+ // from .env, e.g., 'http://localhost:5000/api/auth'
 //const API_URL = 'http://localhost:5000/api/auth';
-const API_URL = 'https://pfp-backend-0670.onrender.com/api/auth';
+const API_URL = 'http://91.99.48.218:5000/api/auth';
 
+
+// ✅ Register a new user (admin creates users)
+// ✅ Register a new user (admin creates users)
 export const signUp = async (
-  email: string,
-  password: string,
-  role: string,
   firstName: string,
   lastName: string,
-  upline_id?: string,
-  cpf?: string,
-  phone?: string
+  email: string,
+  password: string,
+  role: "user" | "admin",
+  department: string,
+  cpf: string,
+  token: string // 👈 include token
 ) => {
   try {
-    const response = await axios.post(`${API_URL}/signup`, {
-      email,
-      password,
-      role,
-      firstName,
-      lastName,
-      upline_id,
-      cpf,
-      phone,
-    });
+    const response = await axios.post(
+      `${API_URL}/register`,
+      { firstName, lastName, email, password, role, department, cpf },
+      { headers: { Authorization: `Bearer ${token}` } } // 👈 add token here
+    );
 
     return response.data.user;
-  } catch (error) {
-    console.error('Signup error:', error);
-    console.log("Error response data:", error.response?.data);
-    return null;
+  } catch (error: any) {
+    console.error("Signup error:", error);
+    throw new Error(error?.response?.data?.message || "Erro ao registrar usuário.");
   }
 };
 
+
+
+// ✅ Login existing user
 export const signIn = async (email: string, password: string) => {
   try {
-    const response = await axios.post(`${API_URL}/signin`, { email, password });
+    const response = await axios.post(`${API_URL}/login`, { email, password });
     const { token, user } = response.data;
+
+    // Save token and user locally
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+
     return { token, user };
   } catch (error: any) {
-    console.error('Sign in error:', error);
-
-    // ✅ Extract backend error message if available
-    const message =
-      error?.response?.data?.message || error?.message || "Erro ao fazer login. Tente novamente.";
-
-    // ❗Throw with the real backend message
-    throw new Error(message);
+    console.error("Sign in error:", error);
+    throw new Error(error?.response?.data?.message || "Erro ao fazer login.");
   }
 };
 
-
-
-export async function getCurrentUser(token?: string): Promise<profile | null> {
+// ✅ Get current user from token
+export async function getCurrentUser(token?: string): Promise<User | null> {
   const finalToken = token || localStorage.getItem("token");
-  console.log("Using token in getCurrentUser:", finalToken);
-
   if (!finalToken) return null;
 
   try {
     const response = await axios.get(`${API_URL}/me`, {
-      headers: {
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers: { Authorization: `Bearer ${finalToken}` },
     });
-
-    console.log("Get current user response:", response.data);
     return response.data;
   } catch (error: any) {
     console.error("Get current user error:", error?.response?.data || error.message);
     return null;
   }
 }
-;
 
-export const logout = async () => {
-  try {
-    await axios.post(`${API_URL}/logout`);
-    localStorage.removeItem('access_token');
-    console.log("User logged out.");
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
+// ✅ Logout user
+export const logout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
 };
 
-export const inviteUser = async (
-  email: string,
-  role: string,
-  firstName: string,
-  lastName: string,
-  upline_id?: string,
-  cpf?: string,
-  phone?: string
-) => {
-  try {
-    const response = await axios.post(`${API_URL}/invite`, {
-      email,
-      role,
-      firstName,
-      lastName,
-      upline_id,
-      cpf,
-      phone,
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error('Invite error:', error);
-    console.log('Error response data:', error.response?.data);
-    return null;
-  }
-
-  
-};
-export const changePassword = async (email: string) => {
-  try {
-    const response = await axios.post(`${API_URL}/change-password`, { email });
-    return response.data; // You can customize this message based on your backend
-  } catch (error: any) {
-    const message =
-      error?.response?.data?.message || error.message || "Erro ao solicitar redefinição de senha.";
-    throw new Error(message);
-  }
-};
+// ✅ Request password reset (simplified)
 export const requestPasswordReset = async (email: string) => {
   try {
-    const response = await axios.post(`${API_URL}/request-password-reset`, { email });
+    const response = await axios.post(`${API_URL}/change-password`, { email });
     return response.data;
   } catch (error: any) {
-    console.error("Request password reset error:", error);
-    throw new Error(
-      error?.response?.data?.error || "Erro ao enviar o link de redefinição de senha."
-    );
+    throw new Error(error?.response?.data?.message || "Erro ao solicitar redefinição de senha.");
   }
 };

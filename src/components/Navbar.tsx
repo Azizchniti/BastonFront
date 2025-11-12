@@ -56,11 +56,11 @@ const Navbar: React.FC<{
           
           <Link to="/" className="flex items-center gap-2">
 
-                  <img
+                  {/* <img
                   src="/logo_hori.webp"
                   alt="Foco Hub Icon"
                   className="w-40 h-10 object-contain ml-7"
-                />
+                /> */}
               
          
             {/* <span className="text-lg font-semibold tracking-tight">Foco Hub</span> */}
@@ -79,7 +79,7 @@ const Navbar: React.FC<{
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="flex flex-col">
-                <span>{user?.name}</span>
+                <span>{user?.first_name}</span>
                 <span className="text-xs text-muted-foreground">{user?.email}</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
