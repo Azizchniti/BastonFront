@@ -4,7 +4,8 @@ import { Task, Message } from "@/types";
 //const API_URL = import.meta.env.VITE_API_URL + "/tasks"; 
 // Example: 'http://localhost:5000/api/tasks'
 //const API_URL = 'http://localhost:5000/api/tasks';
-const API_URL = 'http://91.99.48.218:5000/api/tasks';
+//const API_URL = 'http://91.99.48.218:5000/api/tasks';
+const API_URL = 'https://baston.agenciafocomkt.com.br/api/tasks';
 // Get token from localStorage
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
