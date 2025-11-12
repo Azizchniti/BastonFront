@@ -3,7 +3,7 @@ import axios from "axios";
 
 //const API_URL = "http://localhost:5000/api/users";
 //const API_URL = 'http://91.99.48.218:5000/api/users';
-const API_URL = 'https://baston.agenciafocomkt.com.br/api/users';
+const API_URL = 'https://api.baston.agenciafocomkt.com.br/api/users';
 
 export const UserService = {
   async getAllUsers(token: string): Promise<User[]> {
