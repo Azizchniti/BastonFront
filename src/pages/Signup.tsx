@@ -175,16 +175,16 @@ const Signup: React.FC = () => {
           <option value="" className="text-gray-900 bg-white">
             Selecione o departamento
           </option>
-          <option value="support" className="text-gray-900 bg-white">
+          <option value="Suporte" className="text-gray-900 bg-white">
             Suporte
           </option>
-          <option value="marketing" className="text-gray-900 bg-white">
+          <option value="Marketing" className="text-gray-900 bg-white">
             Marketing
           </option>
-          <option value="sales" className="text-gray-900 bg-white">
+          <option value="Vendas" className="text-gray-900 bg-white">
             Vendas
           </option>
-          <option value="it" className="text-gray-900 bg-white">
+          <option value="TI" className="text-gray-900 bg-white">
             TI
           </option>
         </select>
