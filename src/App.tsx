@@ -24,6 +24,7 @@ import AdminChamadas from "./pages/admin/Chamadas";
 
 import ProfilePage from "./pages/member/Profile";
 import UserChamadas from "./pages/member/Chamadas";
+import UserChamadasCriadas from "./pages/member/MeusChamados";
 import UserMessaging from "./pages/member/Messaging";
 
 import Signup from "./pages/Signup";
@@ -105,6 +106,15 @@ const App = () => (
                 element={
                   <AuthenticatedLayout requiredRole="user">
                     <UserChamadas />
+                  </AuthenticatedLayout>
+                } 
+              />
+
+              <Route 
+                path="/user/meuschamados" 
+                element={
+                  <AuthenticatedLayout requiredRole="user">
+                    <UserChamadasCriadas />
                   </AuthenticatedLayout>
                 } 
               />

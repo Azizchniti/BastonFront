@@ -45,6 +45,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     // { title: "Novo Chamado", href: "/novo-chamado", icon: PlusCircle },
     { title: "Perfil", href: "/user/profile", icon: User },
+
+    { title: "Eu criei", href: "/user/meuschamados", icon: MessageSquare },
   ];
 
   const adminLinks = [
