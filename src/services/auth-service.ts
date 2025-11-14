@@ -3,9 +3,9 @@ import axios from "axios";
 
 //const API_URL = import.meta.env.VITE_API_URL + "/auth";
  // from .env, e.g., 'http://localhost:5000/api/auth'
-const API_URL = 'http://localhost:5000/api/auth';
+//const API_URL = 'http://localhost:5000/api/auth';
 //const API_URL = 'http://91.99.48.218:5000/api/auth';
-//const API_URL = 'https://api.baston.agenciafocomkt.com.br/api/auth';
+const API_URL = 'https://api.baston.agenciafocomkt.com.br/api/auth';
 
 
 
